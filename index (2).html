@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>XIUGU — Booking</title>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-weight:300;width:100%;min-height:100vh;height:auto;}
+
+.header{padding:30px 24px 22px;border-bottom:1px solid #1e1e1e;display:flex;align-items:flex-end;justify-content:space-between;background:linear-gradient(180deg,#111 0%,#080808 100%);}
+.logo{font-family:'Cinzel',serif;font-size:40px;font-weight:900;letter-spacing:0.3em;line-height:1;background:linear-gradient(160deg,#666 0%,#fff 30%,#ddd 50%,#fff 68%,#777 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-sub{font-family:'Cinzel',serif;font-size:8px;letter-spacing:0.55em;color:#555;margin-top:7px;text-transform:uppercase;}
+.header-right{font-family:'Cinzel',serif;font-size:8px;letter-spacing:0.3em;color:#2e2e2e;text-align:right;line-height:2.2;text-transform:uppercase;}
+
+.step-bar{display:flex;gap:3px;padding:12px 24px;border-bottom:1px solid #111;}
+.step-seg{height:1px;flex:1;background:#1a1a1a;transition:background 0.4s;}
+.step-seg.active{background:linear-gradient(90deg,#666,#ddd,#666);}
+.step-seg.done{background:#3a3a3a;}
+
+.page{display:none;padding:24px;}
+.page.active{display:block;}
+
+.pg-title{font-family:'Cinzel',serif;font-size:28px;letter-spacing:0.25em;font-weight:700;margin-bottom:4px;background:linear-gradient(160deg,#777 0%,#fff 35%,#ccc 50%,#fff 65%,#888 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.pg-sub{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.45em;color:#555;text-transform:uppercase;margin-bottom:24px;}
+.pg-hint{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.3em;color:#666;text-transform:uppercase;margin-bottom:16px;text-align:right;}
+
+.notice{background:#0d0d0d;border:1px solid #1e1e1e;border-left:2px solid #666;padding:20px;margin-bottom:20px;}
+.n-item{font-size:13px;color:#aaa;padding:8px 0;border-bottom:1px solid #151515;display:flex;gap:12px;line-height:1.7;}
+.n-item:last-child{border-bottom:none;}
+.n-dot{color:#ccc;flex-shrink:0;}
+
+.btn-main{width:100%;padding:18px;background:linear-gradient(135deg,#888 0%,#eee 45%,#bbb 55%,#eee 65%,#888 100%);color:#080808;border:none;font-family:'Cinzel',serif;font-size:14px;letter-spacing:0.45em;cursor:pointer;transition:all 0.25s;margin-top:4px;font-weight:700;}
+.btn-main:hover{background:linear-gradient(135deg,#aaa 0%,#fff 45%,#ccc 55%,#fff 65%,#aaa 100%);}
+.btn-main:disabled{background:#1e1e1e;color:#444;cursor:default;}
+
+.btn-ghost{background:transparent;border:1px solid #2a2a2a;color:#888;padding:15px 20px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.25em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.btn-ghost:hover{border-color:#777;color:#ccc;}
+
+/* 服務卡片 複選版 */
+.svc-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;margin-bottom:8px;
+  border:1px solid #1e1e1e;
+  background:linear-gradient(135deg,#0e0e0e,#111,#0e0e0e);
+  cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;
+}
+.svc-item:hover{border-color:#444;}
+.svc-item:hover .svc-name{background:linear-gradient(160deg,#aaa 0%,#fff 40%,#ccc 55%,#fff 70%,#aaa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.svc-item.sel{
+  border-color:#999;
+  background:linear-gradient(135deg,#111,#161616,#111);
+  box-shadow:0 0 14px rgba(200,200,200,0.07), inset 0 0 10px rgba(255,255,255,0.02);
+}
+.svc-item.sel .svc-name{background:linear-gradient(160deg,#888 0%,#fff 35%,#ddd 50%,#fff 65%,#999 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.svc-item.sel .svc-box{border-color:#ccc;background:linear-gradient(135deg,#777,#ddd,#777);}
+.svc-item.sel .svc-box::after{opacity:1;}
+.svc-name{font-family:'Jost',sans-serif;}
+.svc-box{
+  width:18px;height:18px;border:1px solid #333;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;position:relative;
+}
+.svc-box::after{
+  content:'✓';color:#080808;font-size:11px;font-weight:700;
+  opacity:0;transition:opacity 0.2s;font-family:'Cinzel',serif;
+}
+
+/* 선택된 서비스 태그 */
+.sel-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;min-height:28px;}
+.sel-tag{
+  font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;
+  padding:4px 10px;border:1px solid #444;color:#ccc;
+  background:linear-gradient(135deg,#111,#161616);
+}
+
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.cal-month{font-family:'Cinzel',serif;font-size:20px;letter-spacing:0.3em;font-weight:700;background:linear-gradient(160deg,#777,#fff,#ccc,#fff,#888);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.cal-btn{background:none;border:1px solid #1e1e1e;color:#777;width:34px;height:34px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.cal-btn:hover{border-color:#777;color:#ccc;}
+
+.wdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:8px;}
+.wd{text-align:center;font-family:'Cinzel',serif;font-size:8px;letter-spacing:0.1em;color:#444;padding:6px 0;text-transform:uppercase;}
+
+.dgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.dc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'Jost',sans-serif;font-size:14px;cursor:pointer;color:#aaa;transition:all 0.15s;position:relative;border-radius:1px;}
+.dc:hover:not(.em):not(.ps):not(.cl){color:#e8e8e8;background:#141414;}
+.dc.sel{background:linear-gradient(135deg,#777,#ddd,#999,#ddd,#777);color:#080808;font-weight:600;}
+.dc.td{color:#e8e8e8;font-weight:500;}
+.dc.ps{color:#282828;cursor:default;}
+.dc.cl{color:#222;cursor:default;}
+.dc.cl::after{content:'';position:absolute;width:18px;height:1px;background:#252525;transform:rotate(-45deg);}
+.dc.em{cursor:default;}
+
+.slots-wrap{margin-top:20px;}
+.slots-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.4em;color:#666;text-transform:uppercase;margin-bottom:12px;}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.slot{padding:14px 4px;border:1px solid #1e1e1e;background:linear-gradient(135deg,#0e0e0e,#111);color:#aaa;font-family:'Cinzel',serif;font-size:13px;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;text-align:center;font-weight:600;}
+.slot:hover{border-color:#777;color:#e8e8e8;}
+.slot.sel{background:linear-gradient(135deg,#777,#ddd,#999,#ddd,#777);color:#080808;border-color:transparent;font-weight:700;}
+.no-sel{color:#333;font-size:11px;letter-spacing:0.2em;text-align:center;padding:20px 0;grid-column:span 3;font-family:'Cinzel',serif;}
+
+.fl{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.4em;color:#888;text-transform:uppercase;display:block;margin-bottom:10px;}
+.fi{width:100%;padding:13px 0;background:none;border:none;border-bottom:1px solid #252525;color:#e0e0e0;font-family:'Jost',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;}
+.fi:focus{border-color:#999;}
+.fi::placeholder{color:#3a3a3a;}
+.fg{margin-bottom:24px;}
+
+.sr{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #161616;}
+.sl{font-family:'Cinzel',serif;color:#666;letter-spacing:0.15em;text-transform:uppercase;font-size:10px;}
+.sv{color:#e0e0e0;font-size:13px;font-family:'Jost',sans-serif;}
+
+.bbar{display:flex;gap:8px;margin-top:28px;padding-top:18px;border-top:1px solid #161616;}
+.metal-line{height:1px;background:linear-gradient(90deg,transparent,#2e2e2e,transparent);margin:20px 0;}
+
+.ok-glyph{font-family:'Cinzel',serif;font-size:52px;font-weight:900;background:linear-gradient(160deg,#777,#fff,#ddd,#fff,#888);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin:20px 0 8px;letter-spacing:0.15em;}
+.ok-title{font-family:'Cinzel',serif;font-size:30px;letter-spacing:0.3em;font-weight:700;background:linear-gradient(160deg,#777,#fff,#ccc,#fff,#888);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:8px;}
+.ok-sub{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.4em;color:#555;text-align:center;text-transform:uppercase;margin-bottom:28px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">Xiugu</div>
+    <div class="logo-sub">Hair Studio · Taoyuan</div>
+  </div>
+  <div class="header-right">Hair<br>Studio</div>
+</div>
+
+<div class="step-bar">
+  <div class="step-seg active" id="s0"></div>
+  <div class="step-seg" id="s1"></div>
+  <div class="step-seg" id="s2"></div>
+  <div class="step-seg" id="s3"></div>
+</div>
+
+<div class="page active" id="p0">
+  <div style="padding-top:8px;">
+    <div class="pg-title">Line Up</div>
+    <div class="pg-sub">Online Booking</div>
+    <div class="notice">
+      <div class="n-item"><span class="n-dot">✦</span><span>預約完成後 Dana 將透過 LINE 確認時段</span></div>
+      <div class="n-item"><span class="n-dot">✦</span><span>遲到超過 15 分鐘，預約自動取消</span></div>
+      <div class="n-item"><span class="n-dot">✦</span><span>取消請提前 24 小時告知</span></div>
+      <div class="n-item"><span class="n-dot">✦</span><span>週一公休 · 工作時間 12:00 — 20:00</span></div>
+      <div class="n-item"><span class="n-dot">✦</span><span>每時段限 2–3 位，額滿即止</span></div>
+    </div>
+    <div class="metal-line"></div>
+    <button class="btn-main" onclick="go(1)">Book Now</button>
+  </div>
+</div>
+
+<div class="page" id="p1">
+  <div class="pg-title">Service</div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;">
+    <div class="pg-sub" style="margin-bottom:0;">選擇服務項目</div>
+    <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.2em;color:#666;text-transform:uppercase;">可複選</div>
+  </div>
+  <div id="svcList"></div>
+  <div class="bbar">
+    <button class="btn-ghost" onclick="go(0)">←</button>
+    <button class="btn-main" style="flex:1" onclick="fromSvc()">Next →</button>
+  </div>
+</div>
+
+<div class="page" id="p2">
+  <div class="cal-head">
+    <button class="cal-btn" onclick="pm()">‹</button>
+    <div class="cal-month" id="mTitle"></div>
+    <button class="cal-btn" onclick="nm()">›</button>
+  </div>
+  <div class="wdays">
+    <div class="wd">Mon</div><div class="wd">Tue</div><div class="wd">Wed</div>
+    <div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div><div class="wd">Sun</div>
+  </div>
+  <div class="dgrid" id="dGrid"></div>
+  <div class="slots-wrap">
+    <div class="slots-label" id="slotLabel">— Select Date First —</div>
+    <div class="slots" id="slotGrid"></div>
+  </div>
+  <div class="bbar">
+    <button class="btn-ghost" onclick="go(1)">←</button>
+    <button class="btn-main" style="flex:1" onclick="fromCal()">Next →</button>
+  </div>
+</div>
+
+<div class="page" id="p3">
+  <div class="pg-title">Details</div>
+  <div class="pg-sub">填寫預約資料</div>
+  <div class="fg"><label class="fl">姓名 Name</label><input class="fi" id="iName" placeholder="您的姓名"/></div>
+  <div class="fg"><label class="fl">LINE ID 或電話</label><input class="fi" id="iContact" placeholder="方便 Dana 聯繫您"/></div>
+  <div class="fg"><label class="fl">備註 Note（選填）</label><input class="fi" id="iNote" placeholder="髮質狀況、特殊需求等"/></div>
+  <div class="metal-line"></div>
+  <div class="pg-sub" style="margin-bottom:12px;">預約確認 Summary</div>
+  <div class="sr"><span class="sl">Service</span><span class="sv" id="smSvc">—</span></div>
+  <div class="sr"><span class="sl">Date</span><span class="sv" id="smDate">—</span></div>
+  <div class="sr"><span class="sl">Time</span><span class="sv" id="smTime">—</span></div>
+  <div class="bbar">
+    <button class="btn-ghost" onclick="go(2)">←</button>
+    <button class="btn-main" style="flex:1" onclick="submit()">Confirm →</button>
+  </div>
+</div>
+
+<div class="page" id="p4">
+  <div class="ok-glyph">✦</div>
+  <div class="ok-title">Booked</div>
+  <div class="ok-sub">Dana 將透過 LINE 與您確認</div>
+  <div id="okSummary"></div>
+  <button class="btn-main" style="margin-top:28px" onclick="reset()">Back to Home</button>
+</div>
+
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxgGcQXosjvlNBugnGqEShbOLrTO50dyy4rNAPwsffTV1cNRXt6_6hcCBILYemM4LZgJw/exec';
+const SVCS=['剪髮','染髮','燙髮','護髮','頭皮護理','局部燙','局部染'];
+const TIMES=['13:00','15:00','17:00'];
+let sel={svcs:[],date:null,time:null};
+let cy,cm;
+let lineUserId = '';
+
+// 初始化 LIFF
+liff.init({ liffId: '2010101668-SUMScpta' })
+  .then(() => {
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return null;
+    }
+    return liff.getProfile();
+  })
+  .then(profile => {
+    if (profile) lineUserId = profile.userId;
+  })
+  .catch(err => {
+    console.log('LIFF not available:', err);
+    // 非 LINE 環境，繼續正常使用（測試用）
+  });
+
+function init(){const n=new Date();cy=n.getFullYear();cm=n.getMonth();renderSvc();renderCal();}
+
+function go(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('p'+n).classList.add('active');
+  for(let i=0;i<4;i++){
+    const s=document.getElementById('s'+i);
+    s.classList.remove('active','done');
+    if(i<n)s.classList.add('done');
+    else if(i===n)s.classList.add('active');
+  }
+  if(n===3){
+    document.getElementById('smSvc').textContent=sel.svcs.join('、')||'—';
+    document.getElementById('smDate').textContent=sel.date||'—';
+    document.getElementById('smTime').textContent=sel.time||'—';
+  }
+  window.scrollTo(0,0);
+}
+
+function renderSvc(){
+  document.getElementById('svcList').innerHTML=SVCS.map(s=>`
+    <div class="svc-item ${sel.svcs.includes(s)?'sel':''}" onclick="toggleSvc('${s}')">
+      <div class="svc-name">${s}</div>
+      <div class="svc-box"></div>
+    </div>`).join('');
+}
+
+function toggleSvc(s){
+  const idx=sel.svcs.indexOf(s);
+  if(idx>=0) sel.svcs.splice(idx,1);
+  else sel.svcs.push(s);
+  renderSvc();
+}
+
+function fromSvc(){
+  if(sel.svcs.length===0){alert('請選擇至少一項服務');return;}
+  go(2);
+}
+
+function renderCal(){
+  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('mTitle').textContent=M[cm]+'  '+cy;
+  const first=new Date(cy,cm,1);
+  let sd=first.getDay();sd=sd===0?6:sd-1;
+  const dim=new Date(cy,cm+1,0).getDate();
+  const today=new Date();today.setHours(0,0,0,0);
+  let h='';
+  for(let i=0;i<sd;i++)h+='<div class="dc em"></div>';
+  for(let d=1;d<=dim;d++){
+    const dt=new Date(cy,cm,d);
+    const ds=cy+'/'+String(cm+1).padStart(2,'0')+'/'+String(d).padStart(2,'0');
+    const isMon=dt.getDay()===1;
+    const isPast=dt<today;
+    const isToday=dt.getTime()===today.getTime();
+    const isSel=sel.date===ds;
+    let c='dc';
+    if(isMon)c+=' cl';
+    else if(isPast)c+=' ps';
+    else if(isToday)c+=' td';
+    if(isSel)c+=' sel';
+    const oc=(!isMon&&!isPast)?`onclick="pickDate('${ds}')"`:'';
+    h+=`<div class="${c}" ${oc}>${d}</div>`;
+  }
+  document.getElementById('dGrid').innerHTML=h;
+  renderSlots();
+}
+
+function pickDate(ds){sel.date=ds;sel.time=null;renderCal();}
+function renderSlots(){
+  const g=document.getElementById('slotGrid');
+  const l=document.getElementById('slotLabel');
+  if(!sel.date){l.textContent='— Select Date First —';g.innerHTML='<div class="no-sel">尚未選擇日期</div>';return;}
+  const p=sel.date.split('/');
+  l.textContent=p[1]+'/'+p[2]+' Available Slots';
+  g.innerHTML=TIMES.map(t=>`<button class="slot ${sel.time===t?'sel':''}" onclick="pickTime('${t}')">${t}</button>`).join('');
+}
+
+function pickTime(t){sel.time=t;renderSlots();}
+function pm(){cm--;if(cm<0){cm=11;cy--;}renderCal();}
+function nm(){cm++;if(cm>11){cm=0;cy++;}renderCal();}
+function fromCal(){if(!sel.date){alert('請選擇日期');return;}if(!sel.time){alert('請選擇時段');return;}go(3);}
+
+function submit(){
+  const name=document.getElementById('iName').value.trim();
+  const contact=document.getElementById('iContact').value.trim();
+  if(!name){alert('請填寫姓名');return;}
+  if(!contact){alert('請填寫聯繫方式');return;}
+  const note=document.getElementById('iNote').value.trim();
+  const svcStr=sel.svcs.join('、');
+  const btn=document.querySelector('#p3 .btn-main');
+  btn.disabled=true;btn.textContent='Sending…';
+  const summary=`
+    <div class="sr"><span class="sl">Name</span><span class="sv">${name}</span></div>
+    <div class="sr"><span class="sl">Service</span><span class="sv">${svcStr}</span></div>
+    <div class="sr"><span class="sl">Date</span><span class="sv">${sel.date}</span></div>
+    <div class="sr"><span class="sl">Time</span><span class="sv">${sel.time}</span></div>
+    <div class="sr"><span class="sl">Contact</span><span class="sv">${contact}</span></div>
+    ${note?`<div class="sr"><span class="sl">Note</span><span class="sv">${note}</span></div>`:''}
+  `;
+  fetch(SCRIPT_URL,{
+    method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({name,contact,note,service:svcStr,date:sel.date,time:sel.time,userId:lineUserId})
+  }).catch(()=>{}).finally(()=>{
+    btn.disabled=false;btn.textContent='Confirm →';
+    document.getElementById('okSummary').innerHTML=summary;
+    go(4);
+  });
+}
+
+function reset(){
+  sel={svcs:[],date:null,time:null};
+  ['iName','iContact','iNote'].forEach(id=>document.getElementById(id).value='');
+  renderSvc();renderCal();go(0);
+}
+
+init();
+</script>
+</body>
+</html>
