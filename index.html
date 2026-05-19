@@ -99,8 +99,8 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
 .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .slot{padding:14px 4px;border:1px solid #1e1e1e;background:linear-gradient(135deg,#0e0e0e,#111);color:#aaa;font-family:'Cinzel',serif;font-size:13px;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;text-align:center;font-weight:600;}
 .slot:hover{border-color:#777;color:#e8e8e8;}
-.slot.sel{background:linear-gradient(135deg,#777,#ddd,#999,#ddd,#777);color:#080808;border-color:transparent;font-weight:700;}
-.no-sel{color:#333;font-size:11px;letter-spacing:0.2em;text-align:center;padding:20px 0;grid-column:span 3;font-family:'Cinzel',serif;}
+.slot.full{background:#111;color:#333;border-color:#1e1e1e;cursor:default;}
+.slot:disabled{cursor:default;}
 
 .fl{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.4em;color:#888;text-transform:uppercase;display:block;margin-bottom:10px;}
 .fi{width:100%;padding:13px 0;background:none;border:none;border-bottom:1px solid #252525;color:#e0e0e0;font-family:'Jost',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;}
@@ -320,7 +320,23 @@ function renderSlots(){
   if(!sel.date){l.textContent='— Select Date First —';g.innerHTML='<div class="no-sel">尚未選擇日期</div>';return;}
   const p=sel.date.split('/');
   l.textContent=p[1]+'/'+p[2]+' Available Slots';
-  g.innerHTML=TIMES.map(t=>`<button class="slot ${sel.time===t?'sel':''}" onclick="pickTime('${t}')">${t}</button>`).join('');
+  // 讀取該天已預約數量
+  fetch(SCRIPT_URL+'?action=slots&date='+sel.date)
+    .then(r=>r.json())
+    .then(data=>{
+      const counts=data.counts||{};
+      g.innerHTML=TIMES.map(t=>{
+        const full=(counts[t]||0)>=2;
+        return `<button class="slot ${sel.time===t?'sel':''} ${full?'full':''}" 
+          onclick="${full?'':'pickTime(\''+t+'\')'}" 
+          ${full?'disabled':''}>
+          ${t}${full?'<br><span style="font-size:9px;letter-spacing:0.1em">FULL</span>':''}
+        </button>`;
+      }).join('');
+    })
+    .catch(()=>{
+      g.innerHTML=TIMES.map(t=>`<button class="slot ${sel.time===t?'sel':''}" onclick="pickTime('${t}')">${t}</button>`).join('');
+    });
 }
 
 function pickTime(t){sel.time=t;renderSlots();}
