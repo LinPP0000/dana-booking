@@ -149,7 +149,7 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
       <div class="n-item"><span class="n-dot">✦</span><span>每時段限 2–3 位，額滿即止</span></div>
     </div>
     <div class="metal-line"></div>
-    <button class="btn-main" onclick="go(1)">Book Now</button>
+    <button class="btn-main" onclick="go(1)">立即預約 Book Now</button>
   </div>
 </div>
 
@@ -219,6 +219,7 @@ const TIMES=['13:00','15:00','17:00'];
 let sel={svcs:[],date:null,time:null};
 let cy,cm;
 let lineUserId = '';
+let holidays = [];
 
 // 初始化 LIFF
 liff.init({ liffId: '2010101668-SUMScpta' })
@@ -237,7 +238,15 @@ liff.init({ liffId: '2010101668-SUMScpta' })
     // 非 LINE 環境，繼續正常使用（測試用）
   });
 
-function init(){const n=new Date();cy=n.getFullYear();cm=n.getMonth();renderSvc();renderCal();}
+function init(){
+  const n=new Date();cy=n.getFullYear();cm=n.getMonth();
+  renderSvc();
+  // 從 Apps Script 讀取公休日
+  fetch(SCRIPT_URL+'?action=holidays')
+    .then(r=>r.json())
+    .then(data=>{ holidays=data.holidays||[]; renderCal(); })
+    .catch(()=>renderCal());
+}
 
 function go(n){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -288,16 +297,16 @@ function renderCal(){
   for(let d=1;d<=dim;d++){
     const dt=new Date(cy,cm,d);
     const ds=cy+'/'+String(cm+1).padStart(2,'0')+'/'+String(d).padStart(2,'0');
-    const isMon=dt.getDay()===1;
+    const isHoliday=holidays.includes(ds);
     const isPast=dt<today;
     const isToday=dt.getTime()===today.getTime();
     const isSel=sel.date===ds;
     let c='dc';
-    if(isMon)c+=' cl';
+    if(isHoliday)c+=' cl';
     else if(isPast)c+=' ps';
     else if(isToday)c+=' td';
     if(isSel)c+=' sel';
-    const oc=(!isMon&&!isPast)?`onclick="pickDate('${ds}')"`:'';
+    const oc=(!isHoliday&&!isPast)?`onclick="pickDate('${ds}')"`:'';
     h+=`<div class="${c}" ${oc}>${d}</div>`;
   }
   document.getElementById('dGrid').innerHTML=h;
