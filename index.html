@@ -320,6 +320,7 @@ function renderSlots(){
   if(!sel.date){l.textContent='— Select Date First —';g.innerHTML='<div class="no-sel">尚未選擇日期</div>';return;}
   const p=sel.date.split('/');
   l.textContent=p[1]+'/'+p[2]+' Available Slots';
+  g.innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:10px;letter-spacing:0.3em;color:#555;text-align:center;padding:20px;">Loading...</div>';
   // 讀取該天已預約數量
   fetch(SCRIPT_URL+'?action=slots&date='+sel.date)
     .then(r=>r.json())
