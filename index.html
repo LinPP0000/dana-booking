@@ -172,7 +172,7 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
 <script>
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxgGcQXosjvlNBugnGqEShbOLrTO50dyy4rNAPwsffTV1cNRXt6_6hcCBILYemM4LZgJw/exec';
 const SVCS=['剪髮','染髮','燙髮','護髮','頭皮護理','局部燙','局部染'];
-const TIMES=['12:00','15:00','17:00'];
+const TIMES=['12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','特殊時段'];
 let sel={svcs:[],date:null,time:null};
 let cy,cm;
 let lineUserId='';
@@ -299,10 +299,31 @@ function loadSlots(ds){
 function drawSlots(){
   const g=document.getElementById('slotGrid');
   g.innerHTML=TIMES.map(t=>{
+    if(t==='特殊時段'){
+      const isSel=sel.time&&!TIMES.slice(0,-1).includes(sel.time);
+      return `<button class="slot${isSel?' sel':''}" style="grid-column:1/-1;font-size:11px;letter-spacing:0.2em;" onclick="pickSpecial()">✦ 特殊時段</button>`;
+    }
     const full=(slotCounts[t]||0)>=2;
     const isSel=sel.time===t;
     return `<button class="slot${isSel?' sel':''}${full?' full':''}" ${full?'disabled':''} onclick="${full?'':'pickTime(\''+t+'\')'}">${t}${full?'<br><span style="font-size:9px;letter-spacing:0.1em">FULL</span>':''}</button>`;
   }).join('');
+  // 特殊時段輸入框
+  const existInput=document.getElementById('specialInput');
+  if(existInput)existInput.remove();
+  if(sel.time&&!['12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'].includes(sel.time)){
+    const wrap=document.createElement('div');
+    wrap.id='specialInput';
+    wrap.style.cssText='margin-top:12px;';
+    wrap.innerHTML=`<input class="fi" id="specialTime" placeholder="請輸入希望時間，例如：10:30" value="${sel.time!=='特殊時段'?sel.time:''}" oninput="sel.time=this.value||'特殊時段'" style="text-align:center;"/>`;
+    g.parentNode.insertBefore(wrap,g.nextSibling);
+    setTimeout(()=>document.getElementById('specialTime')&&document.getElementById('specialTime').focus(),100);
+  }
+}
+
+function pickSpecial(){
+  sel.time='特殊時段';
+  hideErr('errCal');
+  drawSlots();
 }
 
 function pickTime(t){sel.time=t;hideErr('errCal');drawSlots();}
@@ -313,6 +334,7 @@ function nm(){cm++;if(cm>11){cm=0;cy++;}renderCal();}
 function fromCal(){
   if(!sel.date){showErr('errCal','請選擇日期');return;}
   if(!sel.time){showErr('errCal','請選擇時段');return;}
+  if(sel.time==='特殊時段'){showErr('errCal','請填寫希望的時間');return;}
   go(3);
 }
 
