@@ -76,6 +76,10 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
 .ok-title{font-family:'Cinzel',serif;font-size:30px;letter-spacing:0.3em;font-weight:700;background:linear-gradient(160deg,#777,#fff,#ccc,#fff,#888);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:8px;}
 .ok-sub{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.4em;color:#555;text-align:center;text-transform:uppercase;margin-bottom:28px;}
 .loading-txt{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.3em;color:#555;text-align:center;padding:20px;grid-column:1/-1;}
+/* 錯誤提示樣式 */
+.err-msg{display:none;font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.25em;color:#c44;text-transform:uppercase;padding:10px 14px;border:1px solid #3a1a1a;background:#1a0a0a;margin-top:12px;text-align:center;animation:fadeIn 0.2s ease;}
+.err-msg.show{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
 </style>
 </head>
 <body>
@@ -114,6 +118,7 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
     <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.2em;color:#666;text-transform:uppercase;">可複選</div>
   </div>
   <div id="svcList"></div>
+  <div class="err-msg" id="errSvc">✦ 請選擇至少一項服務</div>
   <div class="bbar">
     <button class="btn-ghost" onclick="go(0)">←</button>
     <button class="btn-main" style="flex:1" onclick="fromSvc()">Next →</button>
@@ -134,6 +139,7 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
     <div class="slots-label" id="slotLabel">— Select Date First —</div>
     <div class="slots" id="slotGrid"></div>
   </div>
+  <div class="err-msg" id="errCal">✦ 請選擇日期與時段</div>
   <div class="bbar">
     <button class="btn-ghost" onclick="go(1)">←</button>
     <button class="btn-main" style="flex:1" onclick="fromCal()">Next →</button>
@@ -150,6 +156,7 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
   <div class="sr"><span class="sl">Service</span><span class="sv" id="smSvc">—</span></div>
   <div class="sr"><span class="sl">Date</span><span class="sv" id="smDate">—</span></div>
   <div class="sr"><span class="sl">Time</span><span class="sv" id="smTime">—</span></div>
+  <div class="err-msg" id="errDetail">✦ 請填寫姓名與聯繫方式</div>
   <div class="bbar">
     <button class="btn-ghost" onclick="go(2)">←</button>
     <button class="btn-main" style="flex:1" onclick="submit()">Confirm →</button>
@@ -171,6 +178,14 @@ let cy,cm;
 let lineUserId='';
 let holidays=[];
 let slotCounts={};
+
+function showErr(id,msg){
+  const el=document.getElementById(id);
+  if(msg)el.textContent='✦ '+msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+function hideErr(id){document.getElementById(id).classList.remove('show');}
 
 liff.init({liffId:'2010180093-ohLeDCoL'})
   .then(()=>{
@@ -218,11 +233,12 @@ function toggleSvc(s){
   const idx=sel.svcs.indexOf(s);
   if(idx>=0)sel.svcs.splice(idx,1);
   else sel.svcs.push(s);
+  hideErr('errSvc');
   renderSvc();
 }
 
 function fromSvc(){
-  if(sel.svcs.length===0){alert('請選擇至少一項服務');return;}
+  if(sel.svcs.length===0){showErr('errSvc','請選擇至少一項服務');return;}
   go(2);
 }
 
@@ -257,6 +273,7 @@ function pickDate(ds){
   sel.date=ds;
   sel.time=null;
   slotCounts={};
+  hideErr('errCal');
   renderCal();
   loadSlots(ds);
 }
@@ -288,27 +305,22 @@ function drawSlots(){
   }).join('');
 }
 
-function pickTime(t){sel.time=t;drawSlots();}
-
-function renderSlots(){
-  const g=document.getElementById('slotGrid');
-  const l=document.getElementById('slotLabel');
-  if(!sel.date){
-    l.textContent='— Select Date First —';
-    g.innerHTML='<div class="no-sel">尚未選擇日期</div>';
-    return;
-  }
-}
+function pickTime(t){sel.time=t;hideErr('errCal');drawSlots();}
 
 function pm(){cm--;if(cm<0){cm=11;cy--;}renderCal();}
 function nm(){cm++;if(cm>11){cm=0;cy++;}renderCal();}
-function fromCal(){if(!sel.date){alert('請選擇日期');return;}if(!sel.time){alert('請選擇時段');return;}go(3);}
+
+function fromCal(){
+  if(!sel.date){showErr('errCal','請選擇日期');return;}
+  if(!sel.time){showErr('errCal','請選擇時段');return;}
+  go(3);
+}
 
 function submit(){
   const name=document.getElementById('iName').value.trim();
   const contact=document.getElementById('iContact').value.trim();
-  if(!name){alert('請填寫姓名');return;}
-  if(!contact){alert('請填寫聯繫方式');return;}
+  if(!name){showErr('errDetail','請填寫姓名');return;}
+  if(!contact){showErr('errDetail','請填寫聯繫方式');return;}
   const note=document.getElementById('iNote').value.trim();
   const svcStr=sel.svcs.join('、');
   const btn=document.querySelector('#p3 .btn-main');
