@@ -346,23 +346,35 @@ function submit(){
   const note=document.getElementById('iNote').value.trim();
   const svcStr=sel.svcs.join('、');
   const btn=document.querySelector('#p3 .btn-main');
-  btn.disabled=true;btn.textContent='Sending…';
-  const summary=`
-    <div class="sr"><span class="sl">Name</span><span class="sv">${name}</span></div>
-    <div class="sr"><span class="sl">Service</span><span class="sv">${svcStr}</span></div>
-    <div class="sr"><span class="sl">Date</span><span class="sv">${sel.date}</span></div>
-    <div class="sr"><span class="sl">Time</span><span class="sv">${sel.time}</span></div>
-    <div class="sr"><span class="sl">Contact</span><span class="sv">${contact}</span></div>
-    ${note?`<div class="sr"><span class="sl">Note</span><span class="sv">${note}</span></div>`:''}
-  `;
-  fetch(SCRIPT_URL,{
-    method:'POST',mode:'no-cors',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({name,contact,note,service:svcStr,date:sel.date,time:sel.time,userId:lineUserId})
-  }).catch(()=>{}).finally(()=>{
-    btn.disabled=false;btn.textContent='Confirm →';
-    document.getElementById('okSummary').innerHTML=summary;
-    go(4);
+  btn.disabled=true; btn.textContent='Sending…';
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify({name, contact, note, service:svcStr, date:sel.date, time:sel.time, userId:lineUserId})
+  })
+  .then(r => r.json())
+  .then(res => {
+    if(res.status === 'ok'){
+      const summary=`
+        <div class="sr"><span class="sl">Name</span><span class="sv">${name}</span></div>
+        <div class="sr"><span class="sl">Service</span><span class="sv">${svcStr}</span></div>
+        <div class="sr"><span class="sl">Date</span><span class="sv">${sel.date}</span></div>
+        <div class="sr"><span class="sl">Time</span><span class="sv">${sel.time}</span></div>
+        <div class="sr"><span class="sl">Contact</span><span class="sv">${contact}</span></div>
+        ${note?`<div class="sr"><span class="sl">Note</span><span class="sv">${note}</span></div>`:''}
+      `;
+      document.getElementById('okSummary').innerHTML=summary;
+      go(4);
+    } else {
+      showErr('errDetail','送出失敗，請再試一次');
+    }
+  })
+  .catch(()=>{
+    showErr('errDetail','網路錯誤，請再試一次');
+  })
+  .finally(()=>{
+    btn.disabled=false; btn.textContent='Confirm →';
   });
 }
 
