@@ -348,27 +348,25 @@ function submit(){
   const btn=document.querySelector('#p3 .btn-main');
   btn.disabled=true; btn.textContent='Sending…';
 
+  // no-cors 模式：跨網域 POST 到 Apps Script。缺點是收不到回應，
+  // 所以送出後直接視為成功（doPost 會照常寫入 Sheets 並發 LINE 通知）
   fetch(SCRIPT_URL, {
     method: 'POST',
-    headers: {'Content-Type': 'text/plain'},
+    mode: 'no-cors',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
     body: JSON.stringify({name, contact, note, service:svcStr, date:sel.date, time:sel.time, userId:lineUserId})
   })
-  .then(r => r.json())
-  .then(res => {
-    if(res.status === 'ok'){
-      const summary=`
-        <div class="sr"><span class="sl">Name</span><span class="sv">${name}</span></div>
-        <div class="sr"><span class="sl">Service</span><span class="sv">${svcStr}</span></div>
-        <div class="sr"><span class="sl">Date</span><span class="sv">${sel.date}</span></div>
-        <div class="sr"><span class="sl">Time</span><span class="sv">${sel.time}</span></div>
-        <div class="sr"><span class="sl">Contact</span><span class="sv">${contact}</span></div>
-        ${note?`<div class="sr"><span class="sl">Note</span><span class="sv">${note}</span></div>`:''}
-      `;
-      document.getElementById('okSummary').innerHTML=summary;
-      go(4);
-    } else {
-      showErr('errDetail','送出失敗，請再試一次');
-    }
+  .then(() => {
+    const summary=`
+      <div class="sr"><span class="sl">Name</span><span class="sv">${name}</span></div>
+      <div class="sr"><span class="sl">Service</span><span class="sv">${svcStr}</span></div>
+      <div class="sr"><span class="sl">Date</span><span class="sv">${sel.date}</span></div>
+      <div class="sr"><span class="sl">Time</span><span class="sv">${sel.time}</span></div>
+      <div class="sr"><span class="sl">Contact</span><span class="sv">${contact}</span></div>
+      ${note?`<div class="sr"><span class="sl">Note</span><span class="sv">${note}</span></div>`:''}
+    `;
+    document.getElementById('okSummary').innerHTML=summary;
+    go(4);
   })
   .catch(()=>{
     showErr('errDetail','網路錯誤，請再試一次');
