@@ -165,7 +165,7 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
 <div class="page" id="p4">
   <div class="ok-glyph">✦</div>
   <div class="ok-title">Booked</div>
-  <div class="ok-sub">Dana 將透過 LINE 與您確認</div>
+  <div class="ok-sub" id="okSub">Dana 將透過 LINE 與您確認</div>
   <div id="okSummary"></div>
   <button class="btn-main" style="margin-top:28px" onclick="reset()">Back to Home</button>
 </div>
@@ -178,6 +178,8 @@ let cy,cm;
 let lineUserId='';
 let holidays=[];
 let slotCounts={};
+let slotsReady=false;
+let lastRequestId='';
 
 function showErr(id,msg){
   const el=document.getElementById(id);
@@ -273,6 +275,7 @@ function pickDate(ds){
   sel.date=ds;
   sel.time=null;
   slotCounts={};
+  slotsReady=false;
   hideErr('errCal');
   renderCal();
   loadSlots(ds);
@@ -284,15 +287,18 @@ function loadSlots(ds){
   const p=ds.split('/');
   l.textContent=p[1]+'/'+p[2]+' Available Slots';
   g.innerHTML='<div class="loading-txt">Loading...</div>';
-  fetch(SCRIPT_URL+'?action=slots&date='+ds)
+  fetch(SCRIPT_URL+'?action=slots&date='+encodeURIComponent(ds))
     .then(r=>r.json())
     .then(data=>{
+      if(sel.date!==ds)return;
       slotCounts=data.counts||{};
+      slotsReady=true;
       drawSlots();
     })
     .catch(()=>{
-      slotCounts={};
-      drawSlots();
+      if(sel.date!==ds)return;
+      slotsReady=false;
+      g.innerHTML='<div class="loading-txt">無法確認時段，請稍後再試或重新選擇日期</div>';
     });
 }
 
@@ -333,52 +339,91 @@ function nm(){cm++;if(cm>11){cm=0;cy++;}renderCal();}
 
 function fromCal(){
   if(!sel.date){showErr('errCal','請選擇日期');return;}
+  if(!slotsReady){showErr('errCal','無法確認時段，請重新選擇日期');return;}
   if(!sel.time){showErr('errCal','請選擇時段');return;}
   if(sel.time==='特殊時段'){showErr('errCal','請填寫希望的時間');return;}
   go(3);
 }
 
-function submit(){
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Apps Script 的 GET 回應會轉址；用 script 標籤取得不含個資的預約狀態。
+function checkReceipt(requestId){
+  return new Promise((resolve,reject)=>{
+    const callback='bookingReceipt_'+requestId.replace(/-/g,'');
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>finish(new Error('查詢逾時')),5000);
+    function finish(value){
+      clearTimeout(timer);
+      delete window[callback];
+      script.remove();
+      value instanceof Error?reject(value):resolve(value);
+    }
+    window[callback]=finish;
+    script.onerror=()=>finish(new Error('查詢失敗'));
+    script.src=SCRIPT_URL+'?action=receipt&id='+encodeURIComponent(requestId)+'&callback='+callback+'&_='+Date.now();
+    document.head.appendChild(script);
+  });
+}
+
+async function waitForReceipt(requestId){
+  for(let i=0;i<20;i++){
+    await new Promise(r=>setTimeout(r,1000));
+    try{
+      const result=await checkReceipt(requestId);
+      if(result.status==='ok'||result.status==='error')return result;
+    }catch(err){console.warn('預約狀態查詢暫時失敗',err);}
+  }
+  return {status:'unknown'};
+}
+
+async function submit(){
   const name=document.getElementById('iName').value.trim();
   const contact=document.getElementById('iContact').value.trim();
   if(!name){showErr('errDetail','請填寫姓名');return;}
   if(!contact){showErr('errDetail','請填寫聯繫方式');return;}
+  if(!slotsReady){showErr('errDetail','請返回重新確認時段');return;}
   const note=document.getElementById('iNote').value.trim();
   const svcStr=sel.svcs.join('、');
   const btn=document.querySelector('#p3 .btn-main');
   btn.disabled=true; btn.textContent='Sending…';
-
-  // no-cors 模式：跨網域 POST 到 Apps Script。缺點是收不到回應，
-  // 所以送出後直接視為成功（doPost 會照常寫入 Sheets 並發 LINE 通知）
-  fetch(SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: {'Content-Type': 'text/plain;charset=utf-8'},
-    body: JSON.stringify({name, contact, note, service:svcStr, date:sel.date, time:sel.time, userId:lineUserId})
-  })
-  .then(() => {
-    const summary=`
-      <div class="sr"><span class="sl">Name</span><span class="sv">${name}</span></div>
-      <div class="sr"><span class="sl">Service</span><span class="sv">${svcStr}</span></div>
-      <div class="sr"><span class="sl">Date</span><span class="sv">${sel.date}</span></div>
-      <div class="sr"><span class="sl">Time</span><span class="sv">${sel.time}</span></div>
-      <div class="sr"><span class="sl">Contact</span><span class="sv">${contact}</span></div>
-      ${note?`<div class="sr"><span class="sl">Note</span><span class="sv">${note}</span></div>`:''}
-    `;
-    document.getElementById('okSummary').innerHTML=summary;
+  // 保留同一個編號，避免重試造成重複預約。
+  if(!lastRequestId)lastRequestId=crypto.randomUUID();
+  const requestId=lastRequestId;
+  try{
+    await fetch(SCRIPT_URL,{
+      method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({name,contact,note,service:svcStr,date:sel.date,time:sel.time,userId:lineUserId,requestId})
+    });
+  }catch(err){console.warn('送出請求失敗，仍查詢預約結果',err);}
+  const result=await waitForReceipt(requestId);
+  if(result.status==='ok'){
+    const entries=[['Name',name],['Service',svcStr],['Date',sel.date],['Time',sel.time],['Contact',contact]];
+    if(note)entries.push(['Note',note]);
+    document.getElementById('okSummary').innerHTML=entries.map(([label,value])=>
+      '<div class="sr"><span class="sl">'+label+'</span><span class="sv">'+escapeHtml(value)+'</span></div>'
+    ).join('');
+    document.getElementById('okSub').textContent=result.lineSent
+      ?'已收到預約資料，Dana 確認後會再通知您'
+      :'已收到預約資料；LINE 通知暫時無法發送，請用下方聯繫方式詢問 Dana';
     go(4);
-  })
-  .catch(()=>{
-    showErr('errDetail','網路錯誤，請再試一次');
-  })
-  .finally(()=>{
-    btn.disabled=false; btn.textContent='Confirm →';
-  });
+  }else if(result.status==='error'){
+    lastRequestId='';
+    showErr('errDetail',result.message||'預約未完成，請稍後再試');
+  }else{
+    showErr('errDetail','無法確認是否已送出，請先聯繫 Dana，避免重複預約');
+  }
+  btn.disabled=false;btn.textContent='Confirm →';
 }
 
 function reset(){
   sel={svcs:[],date:null,time:null};
   slotCounts={};
+  slotsReady=false;
+  lastRequestId='';
   ['iName','iContact','iNote'].forEach(id=>document.getElementById(id).value='');
   renderSvc();renderCal();go(0);
 }
