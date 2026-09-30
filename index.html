@@ -170,7 +170,8 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
   <button class="btn-main" style="margin-top:28px" onclick="reset()">Back to Home</button>
 </div>
 <script>
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxMmkX2mTou0CVxBSdmHrWVecKOYbYZEIs42QjGMqcsw96-VlB5cFUJyCKfUROrUixDVg/exec';
+// 貼上目前正在使用的網頁應用程式網址（完整網址，結尾為 /exec）。
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyHu7-sdDnyrhSgKWHlabSHieSoJjWufAelmqmhnAznE_PO3WMC8-aEeAjNlazqPWUBnw/exec';
 const SVCS=['剪髮','染髮','燙髮','護髮','頭皮護理','局部燙','局部染','壓貼燙'];
 const TIMES=['12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','特殊時段'];
 let sel={svcs:[],date:null,time:null};
@@ -393,11 +394,11 @@ async function submit(){
   if(!lastRequestId)lastRequestId=crypto.randomUUID();
   const requestId=lastRequestId;
   try{
-    await fetch(SCRIPT_URL,{
+    fetch(SCRIPT_URL,{
       method:'POST',mode:'no-cors',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({name,contact,note,service:svcStr,date:sel.date,time:sel.time,userId:lineUserId,requestId})
-    });
+    }).catch(err=>console.warn('送出請求失敗，仍查詢預約結果',err));
   }catch(err){console.warn('送出請求失敗，仍查詢預約結果',err);}
   const result=await waitForReceipt(requestId);
   if(result.status==='ok'){
@@ -406,9 +407,9 @@ async function submit(){
     document.getElementById('okSummary').innerHTML=entries.map(([label,value])=>
       '<div class="sr"><span class="sl">'+label+'</span><span class="sv">'+escapeHtml(value)+'</span></div>'
     ).join('');
-    document.getElementById('okSub').textContent=result.lineSent
-      ?'已收到預約資料，Dana 確認後會再通知您'
-      :'已收到預約資料；LINE 通知暫時無法發送，請用下方聯繫方式詢問 Dana';
+    document.getElementById('okSub').textContent=result.lineSent === false
+      ?'已收到預約資料；LINE 通知暫時無法發送，請用下方聯繫方式詢問 Dana'
+      :'已收到預約資料，Dana 確認後會再通知您';
     go(4);
   }else if(result.status==='error'){
     lastRequestId='';
