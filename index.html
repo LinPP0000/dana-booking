@@ -172,7 +172,7 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
 </div>
 <script>
 // 貼上目前正在使用的網頁應用程式網址（完整網址，結尾為 /exec）。
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyHu7-sdDnyrhSgKWHlabSHieSoJjWufAelmqmhnAznE_PO3WMC8-aEeAjNlazqPWUBnw/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzPUEVfXIqhcYo6uR9Kh4PKGD46dVgWhZ1CxSq_jpi6DHym9SWJ01x7eqEgnM7O8hLxHA/exec';
 const SVCS=['剪髮','染髮','燙髮','護髮','頭皮護理','局部燙','局部染','壓貼燙'];
 const TIMES=['12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','特殊時段'];
 let sel={svcs:[],date:null,time:null};
@@ -182,6 +182,7 @@ let holidays=[];
 let slotCounts={};
 let slotsReady=false;
 let lastRequestId='';
+const monthCache={}; // 'yyyy/MM' → Promise，切到某月就先抓整個月的空位
 
 function showErr(id,msg){
   const el=document.getElementById(id);
@@ -191,13 +192,25 @@ function showErr(id,msg){
 }
 function hideErr(id){document.getElementById(id).classList.remove('show');}
 
-liff.init({liffId:'2010180093-ohLeDCoL'})
+// 在電腦直接打開檔案預覽時（file://）跳過 LINE 登入，避免被導回線上舊版
+if(location.protocol!=='file:')liff.init({liffId:'2010180093-ohLeDCoL'})
   .then(()=>{
     if(!liff.isLoggedIn()){liff.login();return null;}
     return liff.getProfile();
   })
   .then(profile=>{if(profile)lineUserId=profile.userId;})
   .catch(err=>console.log('LIFF not available:',err));
+
+function monthKey(y,m){return y+'/'+String(m+1).padStart(2,'0');}
+function loadMonth(key){
+  if(!monthCache[key]){
+    monthCache[key]=fetch(SCRIPT_URL+'?action=month&month='+encodeURIComponent(key))
+      .then(r=>r.json())
+      .then(data=>{if(!data.days)throw new Error('bad');return data.days;})
+      .catch(err=>{delete monthCache[key];throw err;});
+  }
+  return monthCache[key];
+}
 
 function init(){
   const n=new Date();cy=n.getFullYear();cm=n.getMonth();
@@ -271,6 +284,7 @@ function renderCal(){
     h+=`<div class="${c}" ${oc}>${d}</div>`;
   }
   document.getElementById('dGrid').innerHTML=h;
+  loadMonth(monthKey(cy,cm)).catch(()=>{});
 }
 
 function pickDate(ds){
@@ -289,18 +303,23 @@ function loadSlots(ds){
   const p=ds.split('/');
   l.textContent=p[1]+'/'+p[2]+' Available Slots';
   g.innerHTML='<div class="loading-txt">Loading...</div>';
-  fetch(SCRIPT_URL+'?action=slots&date='+encodeURIComponent(ds))
-    .then(r=>r.json())
-    .then(data=>{
-      if(sel.date!==ds)return;
-      slotCounts=data.counts||{};
-      slotsReady=true;
-      drawSlots();
-    })
+  const show=counts=>{
+    if(sel.date!==ds)return;
+    slotCounts=counts||{};
+    slotsReady=true;
+    drawSlots();
+  };
+  const fail=()=>{
+    if(sel.date!==ds)return;
+    slotsReady=false;
+    g.innerHTML='<div class="loading-txt">無法確認時段，請稍後再試或重新選擇日期</div>';
+  };
+  loadMonth(ds.slice(0,7))
+    .then(days=>show(days[ds]))
     .catch(()=>{
-      if(sel.date!==ds)return;
-      slotsReady=false;
-      g.innerHTML='<div class="loading-txt">無法確認時段，請稍後再試或重新選擇日期</div>';
+      // 整月抓不到時，改用原本一天一天查
+      fetch(SCRIPT_URL+'?action=slots&date='+encodeURIComponent(ds))
+        .then(r=>r.json()).then(data=>show(data.counts)).catch(fail);
     });
 }
 
@@ -371,8 +390,9 @@ function checkReceipt(requestId){
 }
 
 async function waitForReceipt(requestId){
-  for(let i=0;i<20;i++){
-    await new Promise(r=>setTimeout(r,1000));
+  await new Promise(r=>setTimeout(r,1200));
+  for(let i=0;i<30;i++){
+    if(i>0)await new Promise(r=>setTimeout(r,600));
     try{
       const result=await checkReceipt(requestId);
       if(result.status==='ok'||result.status==='error')return result;
@@ -390,7 +410,7 @@ async function submit(){
   const note=document.getElementById('iNote').value.trim();
   const svcStr=sel.svcs.join('、');
   const btn=document.querySelector('#p3 .btn-main');
-  btn.disabled=true; btn.textContent='Sending…';
+  btn.disabled=true; btn.textContent='送出中，請稍候…';
   // 保留同一個編號，避免重試造成重複預約。
   if(!lastRequestId)lastRequestId=crypto.randomUUID();
   const requestId=lastRequestId;
@@ -403,6 +423,7 @@ async function submit(){
   }catch(err){console.warn('送出請求失敗，仍查詢預約結果',err);}
   const result=await waitForReceipt(requestId);
   if(result.status==='ok'){
+    delete monthCache[sel.date.slice(0,7)];
     const entries=[['Name',name],['Service',svcStr],['Date',sel.date],['Time',sel.time],['Contact',contact]];
     if(note)entries.push(['Note',note]);
     document.getElementById('okSummary').innerHTML=entries.map(([label,value])=>
