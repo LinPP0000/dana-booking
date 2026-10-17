@@ -101,7 +101,8 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
     <div class="pg-title">Line Up</div>
     <div class="pg-sub">Online Booking</div>
     <div class="notice">
-      <div class="n-item"><span class="n-dot">✦</span><span>預約完成後 Dana 將透過 LINE 確認時段</span></div>
+      <div class="n-item"><span class="n-dot">✦</span><span>送出後會先收到「預約已送出」訊息，此時<b style="color:#e0e0e0;font-weight:500;">尚未確認時段</b></span></div>
+      <div class="n-item"><span class="n-dot">✦</span><span>收到 Dana 傳的「預約已確認」才算預約成功，在那之前請勿直接到店</span></div>
       <div class="n-item"><span class="n-dot">✦</span><span>遲到超過 15 分鐘，預約自動取消</span></div>
       <div class="n-item"><span class="n-dot">✦</span><span>取消請提前 24 小時告知</span></div>
       <div class="n-item"><span class="n-dot">✦</span><span>工作時間 12:00 — 20:00</span></div>
@@ -152,7 +153,7 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
   <div class="fg"><label class="fl">LINE ID 或電話</label><input class="fi" id="iContact" placeholder="方便 Dana 聯繫您"/></div>
   <div class="fg"><label class="fl">備註 Note（選填）</label><input class="fi" id="iNote" placeholder="髮質狀況、特殊需求等"/></div>
   <div class="metal-line"></div>
-  <div class="pg-sub" style="margin-bottom:12px;">預約確認 Summary</div>
+  <div class="pg-sub" style="margin-bottom:12px;">預約資料 Summary</div>
   <div class="sr"><span class="sl">Service</span><span class="sv" id="smSvc">—</span></div>
   <div class="sr"><span class="sl">Date</span><span class="sv" id="smDate">—</span></div>
   <div class="sr"><span class="sl">Time</span><span class="sv" id="smTime">—</span></div>
@@ -164,8 +165,8 @@ html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-we
 </div>
 <div class="page" id="p4">
   <div class="ok-glyph">✦</div>
-  <div class="ok-title">Booked</div>
-  <div class="ok-sub" id="okSub">Dana 將透過 LINE 與您確認</div>
+  <div class="ok-title">Received</div>
+  <div class="ok-sub" id="okSub">尚未確認時段，請等候 Dana 傳送「預約已確認」</div>
   <div id="okSummary"></div>
   <button class="btn-main" style="margin-top:28px" onclick="reset()">Back to Home</button>
 </div>
@@ -409,7 +410,7 @@ async function submit(){
     ).join('');
     document.getElementById('okSub').textContent=result.lineSent === false
       ?'已收到預約資料；LINE 通知暫時無法發送，請用下方聯繫方式詢問 Dana'
-      :'已收到預約資料，Dana 確認後會再通知您';
+      :'尚未確認時段，請等候 Dana 傳送「預約已確認」';
     go(4);
   }else if(result.status==='error'){
     lastRequestId='';
