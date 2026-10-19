@@ -2,456 +2,1780 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>XIUGU — Booking</title>
-<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="XIUGU">
+<title>XIUGU — 記帳</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{background:#080808;color:#c8c8c8;font-family:'Jost',sans-serif;font-weight:300;width:100%;min-height:100vh;height:auto;}
-.header{padding:30px 24px 22px;border-bottom:1px solid #1e1e1e;display:flex;align-items:flex-end;justify-content:space-between;background:linear-gradient(180deg,#111 0%,#080808 100%);}
-.logo{font-family:'Cinzel',serif;font-size:40px;font-weight:900;letter-spacing:0.3em;line-height:1;background:linear-gradient(160deg,#666 0%,#fff 30%,#ddd 50%,#fff 68%,#777 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.logo-sub{font-family:'Cinzel',serif;font-size:8px;letter-spacing:0.55em;color:#555;margin-top:7px;text-transform:uppercase;}
-.header-right{font-family:'Cinzel',serif;font-size:8px;letter-spacing:0.3em;color:#2e2e2e;text-align:right;line-height:2.2;text-transform:uppercase;}
-.step-bar{display:flex;gap:3px;padding:12px 24px;border-bottom:1px solid #111;}
-.step-seg{height:1px;flex:1;background:#1a1a1a;transition:background 0.4s;}
-.step-seg.active{background:linear-gradient(90deg,#666,#ddd,#666);}
-.step-seg.done{background:#3a3a3a;}
-.page{display:none;padding:24px;}
-.page.active{display:block;}
-.pg-title{font-family:'Cinzel',serif;font-size:28px;letter-spacing:0.25em;font-weight:700;margin-bottom:4px;background:linear-gradient(160deg,#777 0%,#fff 35%,#ccc 50%,#fff 65%,#888 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.pg-sub{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.45em;color:#555;text-transform:uppercase;margin-bottom:24px;}
-.notice{background:#0d0d0d;border:1px solid #1e1e1e;border-left:2px solid #666;padding:20px;margin-bottom:20px;}
-.n-item{font-size:13px;color:#aaa;padding:8px 0;border-bottom:1px solid #151515;display:flex;gap:12px;line-height:1.7;}
-.n-item:last-child{border-bottom:none;}
-.n-dot{color:#ccc;flex-shrink:0;}
-.btn-main{width:100%;padding:18px;background:linear-gradient(135deg,#888 0%,#eee 45%,#bbb 55%,#eee 65%,#888 100%);color:#080808;border:none;font-family:'Cinzel',serif;font-size:14px;letter-spacing:0.45em;cursor:pointer;transition:all 0.25s;margin-top:4px;font-weight:700;}
-.btn-main:hover{background:linear-gradient(135deg,#aaa 0%,#fff 45%,#ccc 55%,#fff 65%,#aaa 100%);}
-.btn-main:disabled{background:#1e1e1e;color:#444;cursor:default;}
-.btn-ghost{background:transparent;border:1px solid #2a2a2a;color:#888;padding:15px 20px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.25em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
-.btn-ghost:hover{border-color:#777;color:#ccc;}
-.svc-item{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;margin-bottom:8px;border:1px solid #1e1e1e;background:linear-gradient(135deg,#0e0e0e,#111,#0e0e0e);cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
-.svc-item:hover{border-color:#444;}
-.svc-item.sel{border-color:#999;background:linear-gradient(135deg,#111,#161616,#111);box-shadow:0 0 14px rgba(200,200,200,0.07),inset 0 0 10px rgba(255,255,255,0.02);}
-.svc-item.sel .svc-name{background:linear-gradient(160deg,#888 0%,#fff 35%,#ddd 50%,#fff 65%,#999 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.svc-item.sel .svc-box{border-color:#ccc;background:linear-gradient(135deg,#777,#ddd,#777);}
-.svc-item.sel .svc-box::after{opacity:1;}
-.svc-name{font-family:'Jost',sans-serif;}
-.svc-box{width:18px;height:18px;border:1px solid #333;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s;position:relative;}
-.svc-box::after{content:'✓';color:#080808;font-size:11px;font-weight:700;opacity:0;transition:opacity 0.2s;font-family:'Cinzel',serif;}
-.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-.cal-month{font-family:'Cinzel',serif;font-size:20px;letter-spacing:0.3em;font-weight:700;background:linear-gradient(160deg,#777,#fff,#ccc,#fff,#888);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.cal-btn{background:none;border:1px solid #1e1e1e;color:#777;width:34px;height:34px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
-.cal-btn:hover{border-color:#777;color:#ccc;}
-.wdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:8px;}
-.wd{text-align:center;font-family:'Cinzel',serif;font-size:8px;letter-spacing:0.1em;color:#444;padding:6px 0;text-transform:uppercase;}
-.dgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-.dc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'Jost',sans-serif;font-size:14px;cursor:pointer;color:#aaa;transition:all 0.15s;position:relative;border-radius:1px;}
-.dc:hover:not(.em):not(.ps):not(.cl){color:#e8e8e8;background:#141414;}
-.dc.sel{background:linear-gradient(135deg,#777,#ddd,#999,#ddd,#777);color:#080808;font-weight:600;}
-.dc.td{color:#e8e8e8;font-weight:500;}
-.dc.ps{color:#282828;cursor:default;}
-.dc.cl{color:#222;cursor:default;}
-.dc.cl::after{content:'';position:absolute;width:18px;height:1px;background:#252525;transform:rotate(-45deg);}
-.dc.em{cursor:default;}
-.slots-wrap{margin-top:20px;}
-.slots-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.4em;color:#666;text-transform:uppercase;margin-bottom:12px;}
-.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.slot{padding:14px 4px;border:1px solid #1e1e1e;background:linear-gradient(135deg,#0e0e0e,#111);color:#aaa;font-family:'Cinzel',serif;font-size:13px;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;text-align:center;font-weight:600;}
-.slot:hover:not(:disabled){border-color:#777;color:#e8e8e8;}
-.slot.sel{border-color:#999;background:linear-gradient(135deg,#777,#ddd,#999,#ddd,#777);color:#080808;}
-.slot.full{background:#111;color:#333;border-color:#1e1e1e;cursor:default;}
-.slot:disabled{cursor:default;}
-.fl{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.4em;color:#888;text-transform:uppercase;display:block;margin-bottom:10px;}
-.fi{width:100%;padding:13px 0;background:none;border:none;border-bottom:1px solid #252525;color:#e0e0e0;font-family:'Jost',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;}
-.fi:focus{border-color:#999;}
-.fi::placeholder{color:#3a3a3a;}
-.fg{margin-bottom:24px;}
-.sr{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #161616;}
-.sl{font-family:'Cinzel',serif;color:#666;letter-spacing:0.15em;text-transform:uppercase;font-size:10px;}
-.sv{color:#e0e0e0;font-size:13px;font-family:'Jost',sans-serif;}
-.bbar{display:flex;gap:8px;margin-top:28px;padding-top:18px;border-top:1px solid #161616;}
-.metal-line{height:1px;background:linear-gradient(90deg,transparent,#2e2e2e,transparent);margin:20px 0;}
-.ok-glyph{font-family:'Cinzel',serif;font-size:52px;font-weight:900;background:linear-gradient(160deg,#777,#fff,#ddd,#fff,#888);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin:20px 0 8px;letter-spacing:0.15em;}
-.ok-title{font-family:'Cinzel',serif;font-size:30px;letter-spacing:0.3em;font-weight:700;background:linear-gradient(160deg,#777,#fff,#ccc,#fff,#888);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:8px;}
-.ok-sub{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.4em;color:#555;text-align:center;text-transform:uppercase;margin-bottom:28px;}
-.loading-txt{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.3em;color:#555;text-align:center;padding:20px;grid-column:1/-1;}
-/* 錯誤提示樣式 */
-.err-msg{display:none;font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.25em;color:#c44;text-transform:uppercase;padding:10px 14px;border:1px solid #3a1a1a;background:#1a0a0a;margin-top:12px;text-align:center;animation:fadeIn 0.2s ease;}
-.err-msg.show{display:block;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+:root{
+  --metal:linear-gradient(118deg,#7a7a7a 0%,#a8a8a8 24%,#dcdcdc 42%,#ffffff 50%,#d4d4d4 60%,#a0a0a0 80%,#808080 100%);
+  --metal-text:linear-gradient(160deg,#777 0%,#fff 35%,#ccc 50%,#fff 65%,#888 100%);
+  --bg:#080808; --card:#131313; --border:#262626; --sidebar-w:260px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:#c8c8c8;font-family:'Noto Serif TC',serif;font-weight:400;width:100%;min-height:100vh;-webkit-font-smoothing:antialiased;font-size:16px;}
+input,button,textarea,select{font-family:inherit;font-size:16px;}
+.metal-text{background:var(--metal-text);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.en{font-family:'Playfair Display',serif;}
+
+.btn-metal{width:100%;height:52px;border:none;border-radius:8px;cursor:pointer;font-family:'Playfair Display',serif;font-weight:600;font-size:15px;letter-spacing:0.3em;padding-left:0.3em;color:#1a1a1a;background:var(--metal);box-shadow:0 0 14px rgba(220,220,220,0.12);transition:filter 0.2s;}
+.btn-metal:active{filter:brightness(1.1);}
+.btn-metal:disabled{background:#1e1e1e;color:#444;box-shadow:none;cursor:default;}
+.btn-ghost{background:transparent;border:0.5px solid #2e2e2e;color:#999;height:46px;border-radius:8px;font-size:14px;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;width:100%;}
+.btn-ghost:hover{border-color:#666;color:#ddd;}
+
+.field{margin-bottom:16px;}
+.flabel{font-size:11px;letter-spacing:0.25em;color:#888;margin-bottom:8px;display:block;}
+.finput{width:100%;background:#0e0e0e;border:0.5px solid #2e2e2e;border-radius:8px;height:48px;padding:0 14px;color:#e8e8e8;font-size:16px;outline:none;transition:border-color 0.2s;}
+.finput:focus{border-color:#666;}
+.finput::placeholder{color:#383838;}
+
+/* ====== 畫面 ====== */
+.screen{display:none;}
+.screen.active{display:flex;}
+
+/* ====== 載入畫面 ====== */
+#loading{min-height:100vh;align-items:center;justify-content:center;flex-direction:column;gap:20px;}
+#loading .logo{font-family:'Playfair Display',serif;font-size:32px;letter-spacing:0.16em;font-weight:700;}
+#loading .dots{display:flex;gap:6px;}
+#loading .dot{width:6px;height:6px;border-radius:50%;background:#444;animation:pulse 1.2s ease-in-out infinite;}
+#loading .dot:nth-child(2){animation-delay:0.2s;}
+#loading .dot:nth-child(3){animation-delay:0.4s;}
+@keyframes pulse{0%,80%,100%{opacity:0.3;}40%{opacity:1;}}
+
+/* ====== 登入 ====== */
+#authScreen{min-height:100vh;align-items:center;justify-content:center;padding:24px;}
+.auth-card{width:100%;max-width:380px;}
+.auth-logo{text-align:center;margin-bottom:44px;}
+.auth-logo .lg{font-family:'Playfair Display',serif;font-size:36px;letter-spacing:0.16em;font-weight:700;}
+.auth-logo .sb{font-size:10px;letter-spacing:0.45em;color:#555;margin-top:8px;}
+.auth-logo .sep{color:#2a2a2a;font-size:10px;letter-spacing:0.3em;padding:14px 0;}
+.auth-tabs{display:flex;gap:0;margin-bottom:28px;border:0.5px solid #222;border-radius:10px;overflow:hidden;}
+.auth-tab{flex:1;height:44px;background:transparent;border:none;color:#666;font-size:13px;letter-spacing:0.12em;cursor:pointer;transition:all 0.2s;}
+.auth-tab.on{background:#181818;color:#e8e8e8;}
+.auth-panel{display:none;}
+.auth-panel.on{display:block;}
+.auth-link{text-align:center;margin-top:18px;font-size:12px;color:#555;letter-spacing:0.1em;cursor:pointer;transition:color 0.2s;}
+.auth-link:hover{color:#aaa;}
+.auth-divider{text-align:center;color:#2a2a2a;font-size:10px;letter-spacing:0.25em;padding:16px 0 8px;}
+.invite-note{font-size:11px;color:#666;letter-spacing:0.08em;line-height:1.7;margin-bottom:14px;padding:6px 12px;background:#0e0e0e;border-radius:8px;border:0.5px solid #222;}
+
+/* ====== APP 框架 ====== */
+#app{min-height:100vh;flex-direction:column;}
+.topbar{padding:16px 20px;border-bottom:0.5px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between;background:var(--bg);position:sticky;top:0;z-index:20;}
+.topbar .ico{font-size:22px;color:#b0b0b0;cursor:pointer;background:none;border:none;width:32px;line-height:1;}
+.topbar .logo{font-family:'Playfair Display',serif;font-size:18px;letter-spacing:0.14em;color:#f0f0f0;font-weight:600;}
+.topbar .role-badge{font-size:9px;letter-spacing:0.2em;color:#555;border:0.5px solid #2a2a2a;padding:3px 8px;border-radius:4px;}
+
+.body-pad{padding:24px 20px;}
+.sec-title{font-size:14px;font-weight:600;color:#f0f0f0;letter-spacing:0.15em;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.diamond-sep{color:#2e2e2e;font-size:10px;letter-spacing:0.25em;text-align:center;padding:20px 0;}
+
+/* ====== 抽屜 ====== */
+.drawer-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:40;backdrop-filter:blur(2px);}
+.drawer-mask.active{display:block;}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:280px;background:#0a0a0a;border-right:0.5px solid #1e1e1e;z-index:50;transform:translateX(-100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;}
+.drawer.active{transform:translateX(0);}
+.drawer .dh{padding:28px 22px 20px;border-bottom:0.5px solid #1a1a1a;}
+.drawer .dh .lg{font-family:'Playfair Display',serif;font-size:22px;letter-spacing:0.14em;color:#f2f2f2;font-weight:600;}
+.drawer .dh .sb{font-size:9px;letter-spacing:0.4em;color:#555;margin-top:6px;}
+.drawer .dh .role{font-size:10px;color:#666;margin-top:10px;letter-spacing:0.1em;}
+.drawer .items{padding:12px 10px;flex:1;overflow-y:auto;}
+.di{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:10px;cursor:pointer;color:#c0c0c0;font-size:14px;transition:all 0.15s;letter-spacing:0.05em;}
+.di .ic{font-size:18px;color:#888;width:22px;text-align:center;flex-shrink:0;}
+.di:hover{background:#141414;color:#e0e0e0;}
+.di.on{background:#161616;color:#fff;}
+.di.on .ic{color:#c0c0c0;}
+.drawer .div{height:0.5px;background:#1a1a1a;margin:6px 16px;}
+.drawer .ft{text-align:center;color:#2e2e2e;font-size:10px;letter-spacing:0.35em;padding:16px;}
+
+/* ====== 側邊欄 ====== */
+.sidebar{display:none;width:var(--sidebar-w);min-height:100vh;background:#0a0a0a;border-right:0.5px solid #1a1a1a;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar .sh{padding:32px 24px 22px;border-bottom:0.5px solid #1a1a1a;}
+.sidebar .sh .lg{font-family:'Playfair Display',serif;font-size:22px;letter-spacing:0.14em;color:#f2f2f2;font-weight:600;}
+.sidebar .sh .sb{font-size:9px;letter-spacing:0.4em;color:#555;margin-top:6px;}
+.sidebar .sh .role{font-size:10px;color:#666;margin-top:10px;letter-spacing:0.1em;}
+.sidebar .items{padding:14px 12px;flex:1;}
+.sidebar .ft{text-align:center;color:#2a2a2a;font-size:10px;letter-spacing:0.35em;padding:20px;}
+.main-area{flex:1;overflow-y:auto;min-height:100vh;}
+
+/* ====== 服務方框 ====== */
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.svc-box{height:52px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;padding:0 15px;cursor:pointer;background:#0e0e0e;border:0.5px solid #2a2a2a;transition:all 0.15s;}
+.svc-box .nm{color:#a0a0a0;font-size:14px;}
+.svc-box .ck{font-size:16px;color:transparent;}
+.svc-box:hover{border-color:#444;}
+.svc-box.sel{background:var(--metal);border-color:#bbb;}
+.svc-box.sel .nm{color:#1a1a1a;font-weight:600;}
+.svc-box.sel .ck{color:#1a1a1a;}
+
+/* ====== 簽名 ====== */
+.sign-prev{background:#f0f0f0;border-radius:8px;height:88px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;overflow:hidden;}
+.sign-prev .ph{color:#aaa;font-size:13px;letter-spacing:0.1em;}
+.sign-prev img{max-height:76px;max-width:90%;}
+.sign-prev .zo{position:absolute;bottom:7px;right:10px;font-size:15px;color:#aaa;}
+.sign-modal{display:none;position:fixed;inset:0;background:#080808;z-index:60;flex-direction:column;padding:20px;}
+.sign-modal.active{display:flex;}
+.sign-modal .hd{font-size:13px;color:#aaa;letter-spacing:0.2em;text-align:center;margin-bottom:14px;}
+.sign-canvas-wrap{flex:1;background:#f4f4f4;border-radius:10px;position:relative;overflow:hidden;}
+#signCanvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;display:block;}
+.sign-hint{position:absolute;top:50%;left:0;right:0;text-align:center;color:#bbb;font-size:14px;pointer-events:none;transform:translateY(-50%);}
+.sign-btns{display:flex;gap:10px;margin-top:14px;}
+.sign-btns button{flex:1;height:46px;}
+.landscape-hint{display:none;position:fixed;inset:0;background:rgba(8,8,8,0.96);z-index:55;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.landscape-hint.show{display:flex;}
+.landscape-hint .hi{font-size:52px;}
+.landscape-hint .ht{font-size:14px;color:#777;letter-spacing:0.2em;text-align:center;line-height:2;}
+.landscape-hint .hs{font-size:12px;color:#444;cursor:pointer;margin-top:8px;letter-spacing:0.15em;}
+.landscape-hint .hs:hover{color:#999;}
+
+/* ====== 記錄卡 ====== */
+.rec{background:var(--card);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:border-color 0.15s;}
+.rec:hover{border-color:#3a3a3a;}
+.rec .nm{color:#e8e8e8;font-size:15px;font-weight:500;}
+.rec .meta{color:#666;font-size:12px;margin-top:4px;}
+.rec .pr{font-family:'Playfair Display',serif;color:#d0d0d0;font-size:16px;flex-shrink:0;margin-left:12px;}
+.rec.pending-del{border-color:#5a1a1a;background:#1a0a0a;}
+.rec.pending-del .nm{color:#c66;}
+.pending-tag{font-size:10px;color:#c66;border:0.5px solid #5a1a1a;padding:2px 7px;border-radius:4px;margin-left:8px;letter-spacing:0.1em;}
+
+/* ====== 數據卡 ====== */
+.stat-big{background:linear-gradient(130deg,#141414 0%,#202020 50%,#141414 100%);border:0.5px solid #2e2e2e;border-radius:14px;padding:24px 26px;position:relative;overflow:hidden;}
+.stat-big .lb{font-size:10px;letter-spacing:0.35em;color:#777;margin-bottom:10px;}
+.stat-big .num{font-family:'Playfair Display',serif;font-size:40px;font-weight:600;color:#fff;}
+.stat-big .cnt{font-size:12px;color:#666;margin-top:8px;}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.stat-sm{background:#0e0e0e;border:0.5px solid #222;border-radius:12px;padding:16px;}
+.stat-sm .lb{font-size:10px;letter-spacing:0.22em;color:#666;}
+.stat-sm .num{font-family:'Playfair Display',serif;font-size:22px;color:#e0e0e0;margin-top:6px;font-weight:500;}
+
+/* ====== 月份切換 ====== */
+.msel{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.msel .mtxt{font-family:'Playfair Display',serif;font-size:20px;color:#e8e8e8;}
+.mbtn{background:none;border:0.5px solid #252525;color:#777;width:38px;height:38px;border-radius:8px;font-size:18px;cursor:pointer;transition:all 0.2s;}
+.mbtn:hover{border-color:#666;color:#ccc;}
+.svc-stat{display:flex;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid #181818;font-size:14px;}
+.svc-stat .k{color:#888;}
+.svc-stat .v{color:#ddd;font-family:'Playfair Display',serif;}
+
+/* ====== 邀請碼 ====== */
+.invite-box{background:#0e0e0e;border:0.5px solid #2a2a2a;border-radius:10px;padding:16px;margin-bottom:12px;}
+.invite-code{font-family:'Playfair Display',serif;font-size:28px;letter-spacing:0.3em;color:#e8e8e8;text-align:center;padding:12px 0;}
+.invite-exp{font-size:11px;color:#666;text-align:center;letter-spacing:0.1em;}
+
+/* ====== Toast ====== */
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(16px);background:#181818;border:0.5px solid #333;color:#e0e0e0;padding:12px 24px;border-radius:10px;font-size:13px;letter-spacing:0.12em;z-index:200;opacity:0;transition:all 0.28s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ====== Modal ====== */
+.modal-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:70;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px);}
+.modal-mask.active{display:flex;}
+.modal{background:#0f0f0f;border:0.5px solid #2a2a2a;border-radius:16px;padding:26px;width:100%;max-width:360px;max-height:90vh;overflow-y:auto;}
+.modal .mt{font-size:15px;color:#f0f0f0;letter-spacing:0.1em;margin-bottom:18px;font-weight:600;}
+.modal .mtext{font-size:13px;color:#999;line-height:1.8;margin-bottom:18px;}
+.empty{text-align:center;color:#444;font-size:13px;letter-spacing:0.12em;padding:44px 0;}
+.search-result-meta{color:#666;font-size:11px;margin-left:8px;}
+.locked-msg{font-size:11px;color:#666;text-align:center;padding:8px 0;letter-spacing:0.08em;}
+
+/* ====== RWD ====== */
+@media (min-width:1024px),(min-width:768px) and (orientation:landscape){
+  #app{flex-direction:row;}
+  .topbar{display:none;}
+  .sidebar{display:flex;}
+  .drawer,.drawer-mask{display:none !important;}
+  .body-pad{padding:32px 40px;max-width:800px;}
+  .svc-grid{grid-template-columns:1fr 1fr 1fr;}
+}
+@media (min-width:640px) and (max-width:1023px) and (orientation:portrait){
+  .body-pad{padding:28px 36px;max-width:600px;margin:0 auto;}
+  .svc-grid{grid-template-columns:1fr 1fr 1fr;}
+}
 </style>
 </head>
 <body>
-<div class="header">
-  <div>
-    <div class="logo">Xiugu</div>
-    <div class="logo-sub">Hair Studio · Taoyuan</div>
-  </div>
-  <div class="header-right">Hair<br>Studio</div>
+
+<!-- 載入 -->
+<div class="screen active" id="loading">
+  <div class="logo metal-text">XIUGU</div>
+  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
 </div>
-<div class="step-bar">
-  <div class="step-seg active" id="s0"></div>
-  <div class="step-seg" id="s1"></div>
-  <div class="step-seg" id="s2"></div>
-  <div class="step-seg" id="s3"></div>
-</div>
-<div class="page active" id="p0">
-  <div style="padding-top:8px;">
-    <div class="pg-title">Line Up</div>
-    <div class="pg-sub">Online Booking</div>
-    <div class="notice">
-      <div class="n-item"><span class="n-dot">✦</span><span>送出後會先收到「預約已送出」訊息，此時<b style="color:#e0e0e0;font-weight:500;">尚未確認時段</b></span></div>
-      <div class="n-item"><span class="n-dot">✦</span><span>收到 Dana 傳的「預約已確認」才算預約成功，在那之前請勿直接到店</span></div>
-      <div class="n-item"><span class="n-dot">✦</span><span>遲到超過 15 分鐘，預約自動取消</span></div>
-      <div class="n-item"><span class="n-dot">✦</span><span>取消請提前 24 小時告知</span></div>
-      <div class="n-item"><span class="n-dot">✦</span><span>工作時間 12:00 — 20:00</span></div>
-      <div class="n-item"><span class="n-dot">✦</span><span>每時段限 2 位，額滿即止</span></div>
+
+<!-- 登入/註冊 -->
+<div class="screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="lg metal-text">XIUGU</div>
+      <div class="sb">HAIR STUDIO · TAOYUAN</div>
+      <div class="sep">✦ &nbsp; ✦ &nbsp; ✦</div>
     </div>
-    <div class="metal-line"></div>
-    <button class="btn-main" onclick="go(1)">立即預約 Book Now</button>
+
+    <div class="auth-tabs">
+      <button class="auth-tab on" onclick="switchTab('login')">登入</button>
+      <button class="auth-tab" onclick="switchTab('register')">註冊</button>
+      <button class="auth-tab" onclick="switchTab('forgot')">忘記密碼</button>
+    </div>
+
+    <!-- 登入 -->
+    <div class="auth-panel on" id="panelLogin">
+      <div class="field"><label class="flabel">電子郵件 EMAIL</label><input class="finput" id="loginEmail" type="email" placeholder="your@gmail.com" inputmode="email"></div>
+      <div class="field"><label class="flabel">密碼 PASSWORD</label><input class="finput" id="loginPw" type="password" placeholder="輸入密碼" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn-metal" onclick="doLogin()">登入 LOGIN</button>
+    </div>
+
+    <!-- 註冊 -->
+    <div class="auth-panel" id="panelRegister">
+      <div class="field"><label class="flabel">電子郵件 EMAIL</label><input class="finput" id="regEmail" type="email" placeholder="your@gmail.com" inputmode="email"></div>
+      <div class="field"><label class="flabel">密碼 PASSWORD（至少6碼）</label><input class="finput" id="regPw" type="password" placeholder="設定密碼"></div>
+      <div class="field"><label class="flabel">確認密碼</label><input class="finput" id="regPw2" type="password" placeholder="再輸入一次"></div>
+      <div class="field"><label class="flabel">邀請碼</label><input class="finput" id="regInvite" placeholder="必填，請向 Dana 索取" style="letter-spacing:0.2em;"></div>
+      <button class="btn-metal" onclick="doRegister()">建立帳號 CREATE</button>
+    </div>
+
+    <!-- 忘記密碼 -->
+    <div class="auth-panel" id="panelForgot">
+      <div class="field"><label class="flabel">電子郵件 EMAIL</label><input class="finput" id="forgotEmail" type="email" placeholder="your@gmail.com" inputmode="email"></div>
+      <button class="btn-metal" onclick="doForgot()">寄出重設連結</button>
+      <div class="auth-link" onclick="switchTab('login')" style="margin-top:16px;">返回登入</div>
+    </div>
   </div>
 </div>
-<div class="page" id="p1">
-  <div class="pg-title">Service</div>
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;">
-    <div class="pg-sub" style="margin-bottom:0;">選擇服務項目</div>
-    <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.2em;color:#666;text-transform:uppercase;">可複選</div>
-  </div>
-  <div id="svcList"></div>
-  <div class="err-msg" id="errSvc">✦ 請選擇至少一項服務</div>
-  <div class="bbar">
-    <button class="btn-ghost" onclick="go(0)">←</button>
-    <button class="btn-main" style="flex:1" onclick="fromSvc()">Next →</button>
-  </div>
-</div>
-<div class="page" id="p2">
-  <div class="cal-head">
-    <button class="cal-btn" onclick="pm()">‹</button>
-    <div class="cal-month" id="mTitle"></div>
-    <button class="cal-btn" onclick="nm()">›</button>
-  </div>
-  <div class="wdays">
-    <div class="wd">Mon</div><div class="wd">Tue</div><div class="wd">Wed</div>
-    <div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div><div class="wd">Sun</div>
-  </div>
-  <div class="dgrid" id="dGrid"></div>
-  <div class="slots-wrap">
-    <div class="slots-label" id="slotLabel">— Select Date First —</div>
-    <div class="slots" id="slotGrid"></div>
-  </div>
-  <div class="err-msg" id="errCal">✦ 請選擇日期與時段</div>
-  <div class="bbar">
-    <button class="btn-ghost" onclick="go(1)">←</button>
-    <button class="btn-main" style="flex:1" onclick="fromCal()">Next →</button>
+
+<!-- APP 主框架 -->
+<div class="screen" id="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="sh">
+      <div class="lg metal-text">XIUGU</div>
+      <div class="sb">HAIR STUDIO</div>
+      <div class="role" id="sideRole"></div>
+    </div>
+    <div class="items" id="sideItems"></div>
+    <div class="ft">✦ &nbsp; ✦ &nbsp; ✦</div>
+  </nav>
+  <div class="main-area">
+    <div class="topbar">
+      <button class="ico" onclick="openDrawer()">&#9776;</button>
+      <span class="logo">XIUGU</span>
+      <span class="role-badge" id="topRole"></span>
+    </div>
+    <div id="viewArea"></div>
   </div>
 </div>
-<div class="page" id="p3">
-  <div class="pg-title">Details</div>
-  <div class="pg-sub">填寫預約資料</div>
-  <div class="fg"><label class="fl">姓名 Name</label><input class="fi" id="iName" placeholder="您的姓名"/></div>
-  <div class="fg"><label class="fl">LINE ID 或電話</label><input class="fi" id="iContact" placeholder="方便 Dana 聯繫您"/></div>
-  <div class="fg"><label class="fl">備註 Note（選填）</label><input class="fi" id="iNote" placeholder="髮質狀況、特殊需求等"/></div>
-  <div class="metal-line"></div>
-  <div class="pg-sub" style="margin-bottom:12px;">預約資料 Summary</div>
-  <div class="sr"><span class="sl">Service</span><span class="sv" id="smSvc">—</span></div>
-  <div class="sr"><span class="sl">Date</span><span class="sv" id="smDate">—</span></div>
-  <div class="sr"><span class="sl">Time</span><span class="sv" id="smTime">—</span></div>
-  <div class="err-msg" id="errDetail">✦ 請填寫姓名與聯繫方式</div>
-  <div class="bbar">
-    <button class="btn-ghost" onclick="go(2)">←</button>
-    <button class="btn-main" style="flex:1" onclick="submit()">Confirm →</button>
+
+<!-- 抽屜 -->
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="dh">
+    <div class="lg metal-text">XIUGU</div>
+    <div class="sb">HAIR STUDIO</div>
+    <div class="role" id="drawerRole"></div>
+  </div>
+  <div class="items" id="drawerItems"></div>
+  <div class="ft">✦ &nbsp; ✦ &nbsp; ✦</div>
+</div>
+
+<!-- 簽名 -->
+<div class="landscape-hint" id="landscapeHint">
+  <div class="hi">↺</div>
+  <div class="ht">建議橫向簽名<br>畫面更大更好簽</div>
+  <div class="hs" onclick="skipLandscape()">直接簽名 →</div>
+</div>
+<div class="sign-modal" id="signModal">
+  <div class="hd">請在框內簽名 SIGNATURE</div>
+  <div class="sign-canvas-wrap" id="signWrap">
+    <canvas id="signCanvas"></canvas>
+    <div class="sign-hint" id="signHint">請在此處簽名</div>
+  </div>
+  <div class="sign-btns">
+    <button class="btn-ghost" onclick="signClear()">重簽</button>
+    <button class="btn-ghost" onclick="signCancel()">返回</button>
+    <button class="btn-metal" style="flex:1.5;" onclick="signDone()">完成</button>
   </div>
 </div>
-<div class="page" id="p4">
-  <div class="ok-glyph">✦</div>
-  <div class="ok-title">Received</div>
-  <div class="ok-sub" id="okSub">尚未確認時段，請等候 Dana 傳送「預約已確認」</div>
-  <div id="okSummary"></div>
-  <button class="btn-main" style="margin-top:28px" onclick="reset()">Back to Home</button>
-</div>
-<script>
-// 貼上目前正在使用的網頁應用程式網址（完整網址，結尾為 /exec）。
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzipdsKXWFomrvu-RTwiOIBErR8ZAhuQ2V7i7ag31SATCBegv062Va1hVgeR1qYg-l7gQ/exec';
-const SVCS=['剪髮','染髮','燙髮','護髮','頭皮護理','局部燙','局部染','壓貼燙'];
-const TIMES=['12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','特殊時段'];
-let sel={svcs:[],date:null,time:null};
-let cy,cm;
-let lineUserId='';
-let holidays=[];
-let slotCounts={};
-let slotsReady=false;
-let lastRequestId='';
-const monthCache={}; // 'yyyy/MM' → Promise，切到某月就先抓整個月的空位
 
-function showErr(id,msg){
-  const el=document.getElementById(id);
-  if(msg)el.textContent='✦ '+msg;
-  el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),3000);
+<!-- 記錄詳情 Modal -->
+<div class="modal-mask" id="recMask"><div class="modal" id="recModalBody"></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+import { getFirestore, collection, doc, addDoc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCcUpRWbd4FhG3hRhDx3jROFUJEHG90mh4",
+  authDomain: "xiugu-accounting.firebaseapp.com",
+  projectId: "xiugu-accounting",
+  storageBucket: "xiugu-accounting.firebasestorage.app",
+  messagingSenderId: "925030851611",
+  appId: "1:925030851611:web:a0f00db3ecb294760c44be"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+
+const SVCS = ['剪髮','染髮','燙髮','護髮','頭皮護理','局部燙','局部染','壓貼燙','其他'];
+const DESIGNERS = ['Dana','Diane'];
+const HOUR_GRACE_MIN = 5;   // 5分鐘緩衝
+let currentUser = null;
+let currentRole = null; // 'owner' | 'staff' | 'assistant'
+let currentUserEmail = '';
+let currentDisplayName = '';
+let currentRate = 200;
+
+/* ===== 工具 ===== */
+function $(id){return document.getElementById(id);}
+/* XSS 防護：所有使用者輸入渲染前都要經過 esc() */
+function esc(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-function hideErr(id){document.getElementById(id).classList.remove('show');}
+/* 半小時制時數計算：無條件捨去到半小時，但差5分內視為滿 */
+function calcHours(inMs,outMs){
+  if(!inMs||!outMs||outMs<=inMs) return 0;
+  const mins=Math.floor((outMs-inMs)/60000);
+  const blocks=Math.floor(mins/30);
+  const rest=mins%30;
+  // 餘數若在 25~29 分（差5分鐘內就滿下個半小時）→ 算滿
+  return (blocks + (rest>=30-HOUR_GRACE_MIN?1:0))*0.5;
+}
+function hm(ts){if(!ts)return '—';const d=ts.toDate?ts.toDate():new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function monthKey(d){d=d||new Date();return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0');}
+function fmtMoney(n){return Number(n||0).toLocaleString('en-US');}
+function todayStr(){const d=new Date();return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}
+function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');}
 
-// 在電腦直接打開檔案預覽時（file://）跳過 LINE 登入，避免被導回線上舊版
-if(location.protocol!=='file:')liff.init({liffId:'2010180093-ohLeDCoL'})
-  .then(()=>{
-    if(!liff.isLoggedIn()){liff.login();return null;}
-    return liff.getProfile();
-  })
-  .then(profile=>{if(profile)lineUserId=profile.userId;})
-  .catch(err=>console.log('LIFF not available:',err));
+/* ===== Auth 狀態 ===== */
+let registering=false; // 註冊中：等帳號資料寫好再進入系統
 
-function monthKey(y,m){return y+'/'+String(m+1).padStart(2,'0');}
-function loadMonth(key){
-  if(!monthCache[key]){
-    monthCache[key]=fetch(SCRIPT_URL+'?action=month&month='+encodeURIComponent(key))
-      .then(r=>r.json())
-      .then(data=>{if(!data.days)throw new Error('bad');return data.days;})
-      .catch(err=>{delete monthCache[key];throw err;});
+async function startSession(user){
+  currentUser=user;
+  currentUserEmail=user.email;
+  const snap = await getDoc(doc(db,'users',user.uid));
+  if(!snap.exists()){
+    if(registering) return;
+    await signOut(auth);
+    toast('帳號資料不完整，請聯絡管理員');
+    return;
   }
-  return monthCache[key];
-}
-
-function init(){
-  const n=new Date();cy=n.getFullYear();cm=n.getMonth();
-  renderSvc();
-  fetch(SCRIPT_URL+'?action=holidays')
-    .then(r=>r.json())
-    .then(data=>{holidays=data.holidays||[];renderCal();})
-    .catch(()=>renderCal());
-}
-
-function go(n){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('p'+n).classList.add('active');
-  for(let i=0;i<4;i++){
-    const s=document.getElementById('s'+i);
-    s.classList.remove('active','done');
-    if(i<n)s.classList.add('done');
-    else if(i===n)s.classList.add('active');
+  const data = snap.data();
+  if(data.disabled){
+    await signOut(auth);
+    toast('此帳號已被停用，請聯絡管理員');
+    return;
   }
-  if(n===3){
-    document.getElementById('smSvc').textContent=sel.svcs.join('、')||'—';
-    document.getElementById('smDate').textContent=sel.date||'—';
-    document.getElementById('smTime').textContent=sel.time||'—';
+  if(!['owner','staff','assistant'].includes(data.role)){
+    await signOut(auth);
+    toast('帳號沒有權限，請聯絡管理員');
+    return;
   }
-  window.scrollTo(0,0);
+  currentRole = data.role;
+  currentDisplayName = data.displayName || (user.email||'').split('@')[0];
+  currentRate = typeof data.hourlyRate==='number' ? data.hourlyRate : 200;
+  buildNav();
+  showScreen('app');
+  nav(currentRole==='assistant' ? 'clock' : 'add');
 }
 
-function renderSvc(){
-  document.getElementById('svcList').innerHTML=SVCS.map(s=>`
-    <div class="svc-item ${sel.svcs.includes(s)?'sel':''}" onclick="toggleSvc('${s}')">
-      <div class="svc-name">${s}</div>
-      <div class="svc-box"></div>
-    </div>`).join('');
-}
-
-function toggleSvc(s){
-  const idx=sel.svcs.indexOf(s);
-  if(idx>=0)sel.svcs.splice(idx,1);
-  else sel.svcs.push(s);
-  hideErr('errSvc');
-  renderSvc();
-}
-
-function fromSvc(){
-  if(sel.svcs.length===0){showErr('errSvc','請選擇至少一項服務');return;}
-  go(2);
-}
-
-function renderCal(){
-  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('mTitle').textContent=M[cm]+'  '+cy;
-  const first=new Date(cy,cm,1);
-  let sd=first.getDay();sd=sd===0?6:sd-1;
-  const dim=new Date(cy,cm+1,0).getDate();
-  const today=new Date();today.setHours(0,0,0,0);
-  let h='';
-  for(let i=0;i<sd;i++)h+='<div class="dc em"></div>';
-  for(let d=1;d<=dim;d++){
-    const dt=new Date(cy,cm,d);
-    const ds=cy+'/'+String(cm+1).padStart(2,'0')+'/'+String(d).padStart(2,'0');
-    const isHoliday=holidays.includes(ds);
-    const isPast=dt<today;
-    const isToday=dt.getTime()===today.getTime();
-    const isSel=sel.date===ds;
-    let c='dc';
-    if(isHoliday)c+=' cl';
-    else if(isPast)c+=' ps';
-    else if(isToday)c+=' td';
-    if(isSel)c+=' sel';
-    const oc=(!isHoliday&&!isPast)?`onclick="pickDate('${ds}')"`:'';
-    h+=`<div class="${c}" ${oc}>${d}</div>`;
+onAuthStateChanged(auth, async user=>{
+  if(user){
+    await startSession(user);
+  } else {
+    currentUser=null; currentRole=null;
+    showScreen('authScreen');
+    switchTab('login');
   }
-  document.getElementById('dGrid').innerHTML=h;
-  loadMonth(monthKey(cy,cm)).catch(()=>{});
-}
+});
 
-function pickDate(ds){
-  sel.date=ds;
-  sel.time=null;
-  slotCounts={};
-  slotsReady=false;
-  hideErr('errCal');
-  renderCal();
-  loadSlots(ds);
-}
-
-function loadSlots(ds){
-  const g=document.getElementById('slotGrid');
-  const l=document.getElementById('slotLabel');
-  const p=ds.split('/');
-  l.textContent=p[1]+'/'+p[2]+' Available Slots';
-  g.innerHTML='<div class="loading-txt">Loading...</div>';
-  const show=counts=>{
-    if(sel.date!==ds)return;
-    slotCounts=counts||{};
-    slotsReady=true;
-    drawSlots();
-  };
-  const fail=()=>{
-    if(sel.date!==ds)return;
-    slotsReady=false;
-    g.innerHTML='<div class="loading-txt">無法確認時段，請稍後再試或重新選擇日期</div>';
-  };
-  loadMonth(ds.slice(0,7))
-    .then(days=>show(days[ds]))
-    .catch(()=>{
-      // 整月抓不到時，改用原本一天一天查
-      fetch(SCRIPT_URL+'?action=slots&date='+encodeURIComponent(ds))
-        .then(r=>r.json()).then(data=>show(data.counts)).catch(fail);
-    });
-}
-
-function drawSlots(){
-  const g=document.getElementById('slotGrid');
-  g.innerHTML=TIMES.map(t=>{
-    if(t==='特殊時段'){
-      const isSel=sel.time&&!TIMES.slice(0,-1).includes(sel.time);
-      return `<button class="slot${isSel?' sel':''}" style="grid-column:1/-1;font-size:11px;letter-spacing:0.2em;" onclick="pickSpecial()">✦ 特殊時段</button>`;
-    }
-    const full=(slotCounts[t]||0)>=2;
-    const isSel=sel.time===t;
-    return `<button class="slot${isSel?' sel':''}${full?' full':''}" ${full?'disabled':''} onclick="${full?'':'pickTime(\''+t+'\')'}">${t}${full?'<br><span style="font-size:9px;letter-spacing:0.1em">FULL</span>':''}</button>`;
-  }).join('');
-  // 特殊時段輸入框
-  const existInput=document.getElementById('specialInput');
-  if(existInput)existInput.remove();
-  if(sel.time&&!['12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'].includes(sel.time)){
-    const wrap=document.createElement('div');
-    wrap.id='specialInput';
-    wrap.style.cssText='margin-top:12px;';
-    wrap.innerHTML=`<input class="fi" id="specialTime" placeholder="請輸入希望時間，例如：10:30" value="${sel.time!=='特殊時段'?sel.time:''}" oninput="sel.time=this.value||'特殊時段'" style="text-align:center;"/>`;
-    g.parentNode.insertBefore(wrap,g.nextSibling);
-    setTimeout(()=>document.getElementById('specialTime')&&document.getElementById('specialTime').focus(),100);
-  }
-}
-
-function pickSpecial(){
-  sel.time='特殊時段';
-  hideErr('errCal');
-  drawSlots();
-}
-
-function pickTime(t){sel.time=t;hideErr('errCal');drawSlots();}
-
-function pm(){cm--;if(cm<0){cm=11;cy--;}renderCal();}
-function nm(){cm++;if(cm>11){cm=0;cy++;}renderCal();}
-
-function fromCal(){
-  if(!sel.date){showErr('errCal','請選擇日期');return;}
-  if(!slotsReady){showErr('errCal','無法確認時段，請重新選擇日期');return;}
-  if(!sel.time){showErr('errCal','請選擇時段');return;}
-  if(sel.time==='特殊時段'){showErr('errCal','請填寫希望的時間');return;}
-  go(3);
-}
-
-function escapeHtml(value){
-  return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-// Apps Script 的 GET 回應會轉址；用 script 標籤取得不含個資的預約狀態。
-function checkReceipt(requestId){
-  return new Promise((resolve,reject)=>{
-    const callback='bookingReceipt_'+requestId.replace(/-/g,'');
-    const script=document.createElement('script');
-    const timer=setTimeout(()=>finish(new Error('查詢逾時')),5000);
-    function finish(value){
-      clearTimeout(timer);
-      delete window[callback];
-      script.remove();
-      value instanceof Error?reject(value):resolve(value);
-    }
-    window[callback]=finish;
-    script.onerror=()=>finish(new Error('查詢失敗'));
-    script.src=SCRIPT_URL+'?action=receipt&id='+encodeURIComponent(requestId)+'&callback='+callback+'&_='+Date.now();
-    document.head.appendChild(script);
+/* ===== 登入頁 Tab ===== */
+window.switchTab = function(tab){
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>{
+    t.classList.toggle('on',['login','register','forgot'][i]===tab);
   });
-}
+  document.querySelectorAll('.auth-panel').forEach(p=>p.classList.remove('on'));
+  $('panel'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('on');
+};
 
-async function waitForReceipt(requestId){
-  await new Promise(r=>setTimeout(r,1200));
-  for(let i=0;i<30;i++){
-    if(i>0)await new Promise(r=>setTimeout(r,600));
-    try{
-      const result=await checkReceipt(requestId);
-      if(result.status==='ok'||result.status==='error')return result;
-    }catch(err){console.warn('預約狀態查詢暫時失敗',err);}
-  }
-  return {status:'unknown'};
-}
-
-async function submit(){
-  const name=document.getElementById('iName').value.trim();
-  const contact=document.getElementById('iContact').value.trim();
-  if(!name){showErr('errDetail','請填寫姓名');return;}
-  if(!contact){showErr('errDetail','請填寫聯繫方式');return;}
-  if(!slotsReady){showErr('errDetail','請返回重新確認時段');return;}
-  const note=document.getElementById('iNote').value.trim();
-  const svcStr=sel.svcs.join('、');
-  const btn=document.querySelector('#p3 .btn-main');
-  btn.disabled=true; btn.textContent='送出中，請稍候…';
-  // 保留同一個編號，避免重試造成重複預約。
-  if(!lastRequestId)lastRequestId=crypto.randomUUID();
-  const requestId=lastRequestId;
+/* ===== 登入 ===== */
+window.doLogin = async function(){
+  const email=$('loginEmail').value.trim();
+  const pw=$('loginPw').value;
+  if(!email||!pw){toast('請填寫帳號和密碼');return;}
   try{
-    fetch(SCRIPT_URL,{
-      method:'POST',mode:'no-cors',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({name,contact,note,service:svcStr,date:sel.date,time:sel.time,userId:lineUserId,requestId})
-    }).catch(err=>console.warn('送出請求失敗，仍查詢預約結果',err));
-  }catch(err){console.warn('送出請求失敗，仍查詢預約結果',err);}
-  const result=await waitForReceipt(requestId);
-  if(result.status==='ok'){
-    delete monthCache[sel.date.slice(0,7)];
-    const entries=[['Name',name],['Service',svcStr],['Date',sel.date],['Time',sel.time],['Contact',contact]];
-    if(note)entries.push(['Note',note]);
-    document.getElementById('okSummary').innerHTML=entries.map(([label,value])=>
-      '<div class="sr"><span class="sl">'+label+'</span><span class="sv">'+escapeHtml(value)+'</span></div>'
-    ).join('');
-    document.getElementById('okSub').textContent=result.lineSent === false
-      ?'已收到預約資料；LINE 通知暫時無法發送，請用下方聯繫方式詢問 Dana'
-      :'尚未確認時段，請等候 Dana 傳送「預約已確認」';
-    go(4);
-  }else if(result.status==='error'){
-    lastRequestId='';
-    showErr('errDetail',result.message||'預約未完成，請稍後再試');
-  }else{
-    showErr('errDetail','無法確認是否已送出，請先聯繫 Dana，避免重複預約');
+    await signInWithEmailAndPassword(auth,email,pw);
+  }catch(e){
+    if(e.code==='auth/invalid-credential'||e.code==='auth/wrong-password')toast('帳號或密碼錯誤');
+    else if(e.code==='auth/user-not-found')toast('帳號不存在');
+    else toast('登入失敗：'+e.message);
   }
-  btn.disabled=false;btn.textContent='Confirm →';
+};
+
+/* ===== 註冊 ===== */
+window.doRegister = async function(){
+  const email=$('regEmail').value.trim();
+  const pw=$('regPw').value;
+  const pw2=$('regPw2').value;
+  const invite=$('regInvite').value.trim().toUpperCase();
+  if(!email||!pw){toast('請填寫信箱和密碼');return;}
+  if(pw!==pw2){toast('兩次密碼不一致');return;}
+  if(pw.length<6){toast('密碼至少6碼');return;}
+
+  // 一律需要邀請碼；新的管理員帳號只能由開發者在後台設定
+  if(!invite){toast('請輸入邀請碼');return;}
+  let inv;
+  try{
+    const invSnap=await getDoc(doc(db,'inviteCodes',invite));
+    if(!invSnap.exists()){toast('邀請碼無效');return;}
+    inv=invSnap.data();
+  }catch(e){toast('邀請碼無效');return;}
+  if(inv.used){toast('邀請碼已使用');return;}
+  if(inv.expiresAt && inv.expiresAt.toDate()<new Date()){toast('邀請碼已過期');return;}
+  const role = inv.role==='assistant' ? 'assistant' : 'staff';
+
+  registering=true;
+  let cred;
+  try{
+    cred=await createUserWithEmailAndPassword(auth,email,pw);
+  }catch(e){
+    registering=false;
+    if(e.code==='auth/email-already-in-use')toast('此信箱已註冊');
+    else toast('註冊失敗：'+e.message);
+    return;
+  }
+  try{
+    // 邀請碼標記與帳號資料一起寫入，任一失敗就都不寫
+    const batch=writeBatch(db);
+    batch.update(doc(db,'inviteCodes',invite),{used:true,usedBy:email,usedByUid:cred.user.uid,usedAt:serverTimestamp()});
+    batch.set(doc(db,'users',cred.user.uid),{
+      email, role,
+      displayName: email.split('@')[0],
+      hourlyRate: role==='assistant' ? 200 : null,
+      inviteCode: invite,
+      createdAt: serverTimestamp()
+    });
+    await batch.commit();
+    registering=false;
+    toast('帳號建立成功 ✦');
+    await startSession(cred.user);
+  }catch(e){
+    registering=false;
+    try{ await cred.user.delete(); }catch(_){ await signOut(auth); }
+    toast('註冊失敗，邀請碼可能已被使用或過期');
+  }
+};
+
+/* ===== 忘記密碼 ===== */
+window.doForgot = async function(){
+  const email=$('forgotEmail').value.trim();
+  if(!email){toast('請填寫信箱');return;}
+  try{
+    await sendPasswordResetEmail(auth,email);
+    toast('重設連結已寄出，請檢查信箱');
+    switchTab('login');
+  }catch(e){
+    toast('寄送失敗，請確認信箱');
+  }
+};
+
+/* ===== 登出 ===== */
+window.doLogout = async function(){
+  closeDrawer();
+  await signOut(auth);
+};
+
+/* ===== 建立導覽 ===== */
+function buildNav(){
+  const isOwner = currentRole==='owner';
+  const isAsst  = currentRole==='assistant';
+  const roleText = isOwner ? '👑 管理員' : (isAsst ? '🧰 助理' : '👤 設計師');
+  const shortRole = isOwner ? '管理員' : (isAsst ? '助理' : '設計師');
+  $('topRole').textContent = shortRole;
+  $('drawerRole').textContent = roleText + ' · ' + esc(currentDisplayName);
+  $('sideRole').textContent = roleText + ' · ' + esc(currentDisplayName);
+
+  const items = [
+    // 助理專屬
+    {view:'clock',     ic:'⏱', label:'打卡',     asstOnly:true},
+    {view:'myhours',   ic:'◷', label:'我的時數', asstOnly:true},
+    {view:'mysalary',  ic:'₩', label:'薪資明細', asstOnly:true},
+    {view:'material',  ic:'⬡', label:'材料費',   asstOnly:true},
+    // 設計師 / 老闆
+    {view:'add', ic:'＋', label:'新增記錄', staffUp:true},
+    {view:'today_clients', ic:'◈', label:'今日客戶', staffUp:true},
+    {view:'search', ic:'⌕', label:'搜尋客人', staffUp:true},
+    {view:'today', ic:'$', label:'今日營業額', staffUp:true},
+    {view:'daily', ic:'◷', label:'日報表', staffUp:true},
+    {view:'month', ic:'▦', label:'月結報表', staffUp:true},
+    {view:'export', ic:'⤓', label:'匯出 Excel', ownerOnly:true},
+    {view:'assist', ic:'👥', label:'助理管理', ownerOnly:true},
+    {view:'invite', ic:'✉', label:'邀請碼管理', ownerOnly:true},
+    {view:'pending', ic:'⚠', label:'待刪除清單', ownerOnly:true},
+    {view:'settings', ic:'⚙', label:'設定', always:true},
+  ];
+
+  const makeItems = (logout=false) => {
+    let html = items.filter(i=>
+        i.always
+        || (i.ownerOnly && isOwner)
+        || (i.asstOnly  && isAsst)
+        || (i.staffUp   && !isAsst)
+      )
+      .map(i=>`<div class="di" data-view="${i.view}" onclick="nav('${i.view}')"><span class="ic">${i.ic}</span>${i.label}</div>`).join('');
+    html += '<div class="div"></div>';
+    html += `<div class="di" onclick="doLogout()"><span class="ic">⎋</span>登出</div>`;
+    return html;
+  };
+
+  $('drawerItems').innerHTML = makeItems();
+  $('sideItems').innerHTML = makeItems();
 }
 
-function reset(){
-  sel={svcs:[],date:null,time:null};
-  slotCounts={};
-  slotsReady=false;
-  lastRequestId='';
-  ['iName','iContact','iNote'].forEach(id=>document.getElementById(id).value='');
-  renderSvc();renderCal();go(0);
+/* ===== 導覽 ===== */
+window.nav = function(view){
+  closeDrawer();
+  document.querySelectorAll('.di[data-view]').forEach(d=>d.classList.toggle('on',d.dataset.view===view));
+  const area=$('viewArea');
+  const isOwner=currentRole==='owner';
+  const isAsst=currentRole==='assistant';
+  // 助理不得進入營收相關頁面
+  if(isAsst && ['add','today_clients','search','today','daily','month','export','assist','invite','pending'].includes(view)){
+    area.innerHTML='<div class="body-pad"><div class="empty">無權限存取 ✦</div></div>';return;
+  }
+  if(view==='clock'){ area.innerHTML=viewClock(); loadClock(); }
+  else if(view==='myhours'){ area.innerHTML=viewMyHours(); loadMyHours(); }
+  else if(view==='mysalary'){ area.innerHTML=viewMySalary(); loadMySalary(); }
+  else if(view==='material'){ area.innerHTML=viewMaterial(); loadMaterial(); }
+  else if(view==='assist'&&isOwner){ area.innerHTML=viewAssist(); loadAssistList(); }
+  else if(view==='add') area.innerHTML=viewAdd();
+  else if(view==='today_clients') area.innerHTML=viewTodayClients();
+  else if(view==='today') area.innerHTML=viewToday();
+  else if(view==='month') area.innerHTML=viewMonth();
+  else if(view==='daily'){ area.innerHTML=viewDaily(); renderDaily(); }
+  else if(view==='search') area.innerHTML=viewSearch();
+  else if(view==='export'&&isOwner) area.innerHTML=viewExport();
+  else if(view==='invite'&&isOwner) area.innerHTML=viewInvite();
+  else if(view==='pending'&&isOwner){ area.innerHTML=viewPending(); loadPendingList(); }
+  else if(view==='settings'){ area.innerHTML=viewSettings(); if(isOwner)loadStaffList(); }
+  else area.innerHTML='<div class="body-pad"><div class="empty">無此頁面</div></div>';
+  window.scrollTo(0,0);
+  if(view==='add') afterAddRender();
+  if(view==='month') renderMonth();
+  if(view==='today_clients') loadTodayClients();
+  if(view==='today') loadToday();
+  if(view==='daily') renderDaily();
+  if(view==='invite') loadInvites();
+  if(view==='pending') loadPendingList();
+};
+
+window.openDrawer=function(){$('drawer').classList.add('active');$('drawerMask').classList.add('active');}
+window.closeDrawer=function(){$('drawer').classList.remove('active');$('drawerMask').classList.remove('active');}
+
+/* ===== 新增記錄 ===== */
+let draft={svcs:[],sign:''};
+
+function viewAdd(){
+  return `<div class="body-pad">
+    <div class="sec-title">✦ &nbsp; 新增記錄</div>
+    <div class="field"><label class="flabel">客人姓名</label><input class="finput" id="inName" placeholder="輸入姓名"></div>
+    <div class="field"><label class="flabel">電話</label><input class="finput" id="inPhone" placeholder="0900-000-000" inputmode="tel"></div>
+    <div class="field"><label class="flabel">服務項目（可複選）</label><div class="svc-grid" id="svcGrid"></div></div>
+    <div id="otherSvcWrap" style="display:none;margin-top:8px;"><input class="finput" id="otherSvcInput" placeholder="請輸入其他服務內容" oninput="draft.otherSvc=this.value"></div>
+    <div style="display:flex;gap:14px;">
+    <div class="field" style="flex:1.4;">
+    <label class="flabel">價格</label>
+    <input class="finput en" id="inPrice" placeholder="NT$ 0" inputmode="numeric">
+    </div>
+
+    
+    <div class="field" style="flex:1;"><label class="flabel">日期</label><input class="finput" id="inDate" type="date"></div>
+    </div>
+    <div class="field">
+      <label class="flabel">客人簽名（點擊放大）</label>
+      <div class="sign-prev" id="signPrev" onclick="openSign()"><span class="ph">點此簽名</span><span class="zo">⛶</span></div>
+    </div>
+    <button class="btn-metal" onclick="saveRecord()">SAVE &nbsp; 儲存</button>
+  </div>`;
 }
 
-init();
+function afterAddRender(){
+  draft={svcs:[],sign:''};
+  $('svcGrid').innerHTML=SVCS.map(s=>`<div class="svc-box" data-s="${esc(s)}" onclick="toggleSvc('${s}')"><span class="nm">${esc(s)}</span><span class="ck">✓</span></div>`).join('');
+  // 其他選項輸入框
+  const otherWrap=$('otherSvcWrap');
+  if(otherWrap){
+    const hasOther=draft.svcs.includes('其他')||draft.svcs.some(s=>!SVCS.slice(0,-1).includes(s)&&s!=='其他');
+    otherWrap.style.display=hasOther?'block':'none';
+  }
+  const d=new Date();
+  $('inDate').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+window.toggleSvc=function(s){
+  const i=draft.svcs.indexOf(s);
+  if(i>=0)draft.svcs.splice(i,1);else draft.svcs.push(s);
+  document.querySelector(`.svc-box[data-s="${s}"]`).classList.toggle('sel');
+  const wrap=$('otherSvcWrap');
+  if(wrap) wrap.style.display=draft.svcs.includes('其他')?'block':'none';
+};
+
+window.saveRecord=async function(){
+  const name=$('inName').value.trim();
+  const phone=$('inPhone').value.trim();
+  const priceEl=$('inPrice');
+  const price=priceEl?parseInt((priceEl.value||'').replace(/[^0-9]/g,''))||0:0;
+  const dateInput=$('inDate').value;
+  if(!name){toast('請填寫姓名');return;}
+  if(draft.svcs.length===0){toast('請選擇服務項目');return;}
+  if(!price){toast('請填寫價格');return;}
+  // 處理「其他」服務的自訂內容
+  let finalSvcs=[...draft.svcs];
+  if(finalSvcs.includes('其他')){
+    const otherVal=($('otherSvcInput')&&$('otherSvcInput').value.trim())||'';
+    if(!otherVal){toast('請填寫其他服務內容');return;}
+    finalSvcs=finalSvcs.map(s=>s==='其他'?otherVal:s);
+  }
+  const date=dateInput?dateInput.replace(/-/g,'/'):todayStr();
+  const rec={
+    name,phone,price,services:finalSvcs,date,time:nowTime(),
+    sign:draft.sign,createdAt:serverTimestamp(),
+    createdBy:currentUser.uid,createdByEmail:currentUserEmail
+  };
+  try{
+    await addDoc(collection(db,'records'),rec);
+    toast('已儲存 ✦');nav('add');
+  }catch(e){toast('儲存失敗：'+e.message);}
+};
+
+/* ===== 簽名 ===== */
+let sctx,sdrawing=false,shasInk=false,scanvas,_signSkipped=false;
+
+window.openSign=function(){
+  const isMobile=window.innerWidth<768;
+  const isPortrait=window.innerHeight>window.innerWidth;
+  if(isMobile&&isPortrait&&!_signSkipped){$('landscapeHint').classList.add('show');return;}
+  _signSkipped=false;_doOpenSign();
+};
+window.skipLandscape=function(){$('landscapeHint').classList.remove('show');_signSkipped=true;_doOpenSign();};
+window.addEventListener('orientationchange',()=>{
+  if($('landscapeHint').classList.contains('show')){
+    setTimeout(()=>{$('landscapeHint').classList.remove('show');_doOpenSign();},400);
+  }
+});
+
+function _doOpenSign(){
+  $('signModal').classList.add('active');
+  scanvas=$('signCanvas');
+  const wrap=$('signWrap');
+  const rect=wrap.getBoundingClientRect();
+  // 關鍵：用 getBoundingClientRect 取得真實像素大小
+  scanvas.width=Math.floor(rect.width);
+  scanvas.height=Math.floor(rect.height);
+  sctx=scanvas.getContext('2d');
+  sctx.lineWidth=3;sctx.lineCap='round';sctx.lineJoin='round';sctx.strokeStyle='#111';
+  shasInk=false;$('signHint').style.display='block';
+  bindSign();
+}
+
+function bindSign(){
+  // 關鍵：每次重新取得 canvas 的 bounding rect，確保座標正確
+  const getPos=e=>{
+    const r=scanvas.getBoundingClientRect();
+    const scaleX=scanvas.width/r.width;
+    const scaleY=scanvas.height/r.height;
+    const p=e.touches?e.touches[0]:e;
+    return{x:(p.clientX-r.left)*scaleX, y:(p.clientY-r.top)*scaleY};
+  };
+  const start=e=>{e.preventDefault();sdrawing=true;shasInk=true;$('signHint').style.display='none';const{x,y}=getPos(e);sctx.beginPath();sctx.moveTo(x,y);};
+  const move=e=>{if(!sdrawing)return;e.preventDefault();const{x,y}=getPos(e);sctx.lineTo(x,y);sctx.stroke();};
+  const end=()=>{sdrawing=false;};
+  scanvas.onmousedown=start;scanvas.onmousemove=move;scanvas.onmouseup=end;scanvas.onmouseleave=end;
+  scanvas.ontouchstart=start;scanvas.ontouchmove=move;scanvas.ontouchend=end;
+}
+
+window.signClear=function(){if(sctx)sctx.clearRect(0,0,scanvas.width,scanvas.height);shasInk=false;$('signHint').style.display='block';};
+window.signCancel=function(){$('signModal').classList.remove('active');};
+window.signDone=function(){
+  if(!shasInk){toast('尚未簽名');return;}
+  draft.sign=scanvas.toDataURL('image/png');
+  $('signPrev').innerHTML=`<img src="${draft.sign}"><span class="zo">⛶</span>`;
+  $('signModal').classList.remove('active');
+};
+
+/* ===== 今日客戶===== */
+function viewTodayClients(){
+  return `<div class="body-pad">
+    <div class="sec-title">✦ &nbsp; 今日客戶</div>
+    <div id="todayClientList"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+
+async function loadTodayClients(){
+  const t=todayStr();
+  try{
+    const recsT=(await getRecs(
+      query(collection(db,'records'),where('date','==',t),orderBy('createdAt','desc')),
+      r=>r.date===t)).sort(byCreatedDesc);
+    const list=$('todayClientList');
+    if(!list)return;
+    if(!recsT.length){list.innerHTML='<div class="empty">今日尚無記錄</div>';return;}
+    list.innerHTML=recsT.map(r=>{
+      const pt=r.pendingDelete?'<span class="pending-tag">待刪除</span>':'';
+      return `<div class="rec${r.pendingDelete?' pending-del':''}" onclick="openRec('${r.id}')">
+        <div><div class="nm">${esc(r.name)}${pt}</div><div class="meta">${esc(r.services.join('・'))}　${r.time}　${r.sign?'✍️':''}</div></div>
+      </div>`;
+    }).join('');
+  }catch(e){console.error(e);}
+}
+
+/* ===== 讀取記錄 =====
+   員工只能讀自己的記錄（資料庫規則會擋），所以員工一律只查 createdBy=自己，
+   再在前端篩選日期；老闆照原本的查詢。 */
+async function getRecs(ownerQuery, keep){
+  if(currentRole==='owner'){
+    const snap=await getDocs(ownerQuery);
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  }
+  const snap=await getDocs(query(collection(db,'records'),where('createdBy','==',currentUser.uid)));
+  return snap.docs.map(d=>({id:d.id,...d.data()})).filter(keep);
+}
+const msOf=r=>(r.createdAt&&r.createdAt.toMillis)?r.createdAt.toMillis():0;
+const byCreatedDesc=(a,b)=>msOf(b)-msOf(a);
+
+/* ===== 今日營業額===== */
+function viewToday(){
+  return `<div class="body-pad">
+    <div class="sec-title">✦ &nbsp; 今日營業額</div>
+    <div id="todayBody"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+
+async function loadToday(){
+  const t=todayStr();
+  const month=t.slice(0,7);
+  try{
+    const [recsRaw,mRecs]=await Promise.all([
+      getRecs(query(collection(db,'records'),where('date','==',t),orderBy('createdAt','desc')),r=>r.date===t),
+      getRecs(query(collection(db,'records'),where('date','>=',month+'/01')),r=>r.date>=month+'/01')
+    ]);
+    const recs=recsRaw.sort(byCreatedDesc);
+    const total=recs.reduce((s,r)=>s+(r.price||0),0);
+    const mTotal=mRecs.reduce((s,r)=>s+(r.price||0),0);
+    const body=$('todayBody');
+    if(!body)return;
+    body.innerHTML=`
+      <div class="stat-big">
+        <div class="lb">TODAY · ${t.slice(5)}</div>
+        <div class="num">NT$ ${fmtMoney(total)}</div>
+        <div class="cnt">今日 ${recs.length} 筆服務</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-sm"><div class="lb">本月累計</div><div class="num">NT$ ${fmtMoney(mTotal)}</div></div>
+        <div class="stat-sm"><div class="lb">本月筆數</div><div class="num">${mRecs.length}</div></div>
+      </div>
+      <div class="sec-title" style="margin:28px 0 12px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">今日記錄</div>
+      ${recs.length?recs.map(r=>recCard(r)).join(''):'<div class="empty">今日尚無記錄</div>'}`;
+  }catch(e){console.error(e);}
+}
+
+function recCard(r){
+  const pendingTag=r.pendingDelete?`<span class="pending-tag">待刪除</span>`:'';
+  return `<div class="rec${r.pendingDelete?' pending-del':''}" onclick="openRec('${r.id}')">
+    <div><div class="nm">${esc(r.name)}${pendingTag}</div><div class="meta">${esc(r.services.join('・'))}　${r.time}</div></div>
+    <div class="pr">$${fmtMoney(r.price)}</div>
+  </div>`;
+}
+
+/* ===== 日報表 ===== */
+let dCur=new Date();
+function viewDaily(){
+  return `<div class="body-pad">
+    <div class="sec-title">◷ &nbsp; 日報表</div>
+    <div class="msel"><button class="mbtn" onclick="dPrev()">‹</button><span class="mtxt" id="dTxt"></span><button class="mbtn" onclick="dNext()">›</button></div>
+    <div id="dBody"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+window.dPrev=function(){dCur.setDate(dCur.getDate()-1);renderDaily();}
+window.dNext=function(){dCur.setDate(dCur.getDate()+1);renderDaily();}
+
+async function renderDaily(){
+  const y=dCur.getFullYear();
+  const m=String(dCur.getMonth()+1).padStart(2,'0');
+  const d=String(dCur.getDate()).padStart(2,'0');
+  const dateStr=y+'/'+m+'/'+d;
+  const dTxt=$('dTxt');if(dTxt)dTxt.textContent=y+'.'+m+'.'+d;
+  try{
+    const recs=(await getRecs(
+      query(collection(db,'records'),where('date','==',dateStr),orderBy('time','asc')),
+      r=>r.date===dateStr)).sort((a,b)=>String(a.time).localeCompare(String(b.time)));
+    const total=recs.reduce((s,r)=>s+(r.price||0),0);
+    const body=$('dBody');if(!body)return;
+    if(!recs.length){body.innerHTML='<div class="empty">當日無記錄 ✦</div>';return;}
+    const svcCount={};
+    recs.forEach(r=>r.services.forEach(s=>{svcCount[s]=(svcCount[s]||0)+1;}));
+    const svcRows=Object.keys(svcCount).sort((a,b)=>svcCount[b]-svcCount[a])
+      .map(s=>`<div class="svc-stat"><span class="k">${esc(s)}</span><span class="v">${svcCount[s]} 次</span></div>`).join('');
+    body.innerHTML=`
+      <div class="stat-big">
+        <div class="lb">DAILY · ${y}.${m}.${d}</div>
+        <div class="num">NT$ ${fmtMoney(total)}</div>
+        <div class="cnt">共 ${recs.length} 筆服務</div>
+      </div>
+      <div class="sec-title" style="margin:26px 0 8px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">服務項目統計</div>
+      ${svcRows}
+      <div class="sec-title" style="margin:26px 0 12px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">當日明細</div>
+      ${recs.map(r=>`<div class="rec${r.pendingDelete?' pending-del':''}" onclick="openRec('${r.id}')">
+        <div><div class="nm">${esc(r.name)}${r.pendingDelete?'<span class="pending-tag">待刪除</span>':''}</div><div class="meta">${r.time}　${esc(r.services.join('・'))}</div></div>
+        <div class="pr">$${fmtMoney(r.price)}</div></div>`).join('')}`;
+  }catch(e){console.error(e);}
+}
+
+/* ===== 月結報表 ===== */
+let mCur=new Date();
+function viewMonth(){
+  return `<div class="body-pad">
+    <div class="sec-title">✦ &nbsp; 月結報表</div>
+    <div class="msel"><button class="mbtn" onclick="mPrev()">‹</button><span class="mtxt" id="mTxt"></span><button class="mbtn" onclick="mNext()">›</button></div>
+    <div id="mBody"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+window.mPrev=function(){mCur.setMonth(mCur.getMonth()-1);renderMonth();}
+window.mNext=function(){mCur.setMonth(mCur.getMonth()+1);renderMonth();}
+
+async function renderMonth(){
+  const y=mCur.getFullYear(),m=mCur.getMonth()+1;
+  const key=y+'/'+String(m).padStart(2,'0');
+  const mTxt=$('mTxt');if(mTxt)mTxt.textContent=y+'.'+String(m).padStart(2,'0');
+  try{
+    const recs=(await getRecs(
+      query(collection(db,'records'),where('date','>=',key+'/01'),where('date','<=',key+'/31'),orderBy('date','desc')),
+      r=>r.date>=key+'/01'&&r.date<=key+'/31')).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+    const total=recs.reduce((s,r)=>s+(r.price||0),0);
+    const svcCount={};
+    recs.forEach(r=>r.services.forEach(s=>{svcCount[s]=(svcCount[s]||0)+1;}));
+    const svcRows=Object.keys(svcCount).sort((a,b)=>svcCount[b]-svcCount[a])
+      .map(s=>`<div class="svc-stat"><span class="k">${esc(s)}</span><span class="v">${svcCount[s]} 次</span></div>`).join('')
+      ||'<div class="empty">本月無記錄</div>';
+    const body=$('mBody');if(!body)return;
+    body.innerHTML=`
+      <div class="stat-big">
+        <div class="lb">MONTHLY · ${key.replace('/','.')}</div>
+        <div class="num">NT$ ${fmtMoney(total)}</div>
+        <div class="cnt">共 ${recs.length} 筆服務</div>
+      </div>
+      <div class="sec-title" style="margin:26px 0 8px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">服務項目統計</div>
+      ${svcRows}
+      <div class="sec-title" style="margin:26px 0 12px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">本月明細</div>
+      ${recs.length?recs.map(r=>`<div class="rec" onclick="openRec('${r.id}')">
+        <div><div class="nm">${esc(r.name)}</div><div class="meta">${r.date.slice(5)} ${r.time}　${esc(r.services.join('・'))}</div></div>
+        <div class="pr">$${fmtMoney(r.price)}</div></div>`).join(''):''}`;
+  }catch(e){console.error(e);}
+}
+
+/* ===== 搜尋 ===== */
+function viewSearch(){
+  return `<div class="body-pad">
+    <div class="sec-title">✦ &nbsp; 搜尋客人</div>
+    <div class="field"><input class="finput" id="searchIn" placeholder="輸入姓名或電話" oninput="runSearch()"></div>
+    <div id="searchResult"><div class="empty">輸入關鍵字開始搜尋</div></div>
+  </div>`;
+}
+
+window.runSearch=async function(){
+  const q=$('searchIn').value.trim();
+  const box=$('searchResult');
+  if(!q){box.innerHTML='<div class="empty">輸入關鍵字開始搜尋</div>';return;}
+  if(q.length<2){box.innerHTML='<div class="empty">請輸入至少2個字</div>';return;}
+  box.innerHTML='<div class="empty">搜尋中...</div>';
+  try{
+    const recs=[];
+    if(currentRole==='owner'){
+      // 老闆：用 where 做伺服器端查詢
+      const [nameSnap, phoneSnap] = await Promise.all([
+        getDocs(query(collection(db,'records'), where('name','>=',q), where('name','<=',q+''), orderBy('name'))),
+        getDocs(query(collection(db,'records'), where('phone','>=',q), where('phone','<=',q+''), orderBy('phone')))
+      ]);
+      const seen=new Set();
+      [...nameSnap.docs,...phoneSnap.docs].forEach(d=>{
+        if(!seen.has(d.id)){seen.add(d.id);recs.push({id:d.id,...d.data()});}
+      });
+    }else{
+      // 員工：只搜尋自己建立的記錄
+      recs.push(...await getRecs(null, r=>String(r.name||'').startsWith(q)||String(r.phone||'').startsWith(q)));
+    }
+    if(!recs.length){box.innerHTML='<div class="empty">找不到符合的記錄</div>';return;}
+    const byName={};
+    recs.forEach(r=>{const k=r.name+'|'+(r.phone||'');(byName[k]=byName[k]||[]).push(r);});
+    const isOwner=currentRole==='owner';
+    box.innerHTML=Object.keys(byName).map(k=>{
+      const list=byName[k];const[nm,ph]=k.split('|');
+      const sum=list.reduce((s,r)=>s+(r.price||0),0);
+      return `<div style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+          <div><span style="color:#f0f0f0;font-size:16px;font-weight:500;">${esc(nm)}</span><span class="search-result-meta">${esc(ph||'')}</span></div>
+          ${isOwner?`<div style="font-size:11px;color:#666;">累計 <span class="en" style="color:#bbb;">$${fmtMoney(sum)}</span> · ${list.length}次</div>`:`<div style="font-size:11px;color:#666;">${list.length}次</div>`}
+        </div>
+        ${list.map(r=>`<div class="rec${r.pendingDelete?' pending-del':''}" onclick="openRec('${r.id}')">
+          <div><div class="nm">${esc(r.name)}${r.pendingDelete?'<span class="pending-tag">待刪除</span>':''}</div><div class="meta">${r.date.slice(5)} ${r.time}　${esc(r.services.join('・'))}</div></div>
+          ${isOwner?`<div class="pr">$${fmtMoney(r.price)}</div>`:''}
+        </div>`).join('')}
+      </div>`;
+    }).join('');
+  }catch(e){console.error(e);}
+};
+
+/* ===== 記錄詳情 ===== */
+window.openRec=async function(id){
+  const snap=await getDoc(doc(db,'records',id));
+  if(!snap.exists())return;
+  const r={id:snap.id,...snap.data()};
+  const isOwner=currentRole==='owner';
+  // 30分鐘內可編輯
+  const canEdit=isOwner||(r.createdBy===currentUser.uid&&r.createdAt&&(new Date()-r.createdAt.toDate())<30*60*1000);
+  const isPending=r.pendingDelete===true;
+  $('recMask').classList.add('active');
+  $('recModalBody').innerHTML=`
+    <div class="mt">${esc(r.name)}<span class="search-result-meta">${r.date} ${r.time}</span>${isPending?'<span class="pending-tag" style="margin-left:8px;">待刪除</span>':''}</div>
+    <div class="svc-stat"><span class="k">電話</span><span class="v" style="font-family:inherit;color:#ddd;">${esc(r.phone||'—')}</span></div>
+    <div class="svc-stat"><span class="k">服務</span><span class="v" style="font-family:inherit;color:#ddd;">${esc(r.services.join('、'))}</span></div>
+    ${isOwner?`<div class="svc-stat"><span class="k">價格</span><span class="v">NT$ ${fmtMoney(r.price)}</span></div>`:''}
+    ${r.sign?`<div style="margin-top:16px;"><div class="flabel">簽名</div><div style="background:#f0f0f0;border-radius:8px;padding:10px;text-align:center;"><img src="${r.sign}" style="max-height:70px;max-width:100%;"></div></div>`:''}
+    <div style="display:flex;gap:10px;margin-top:22px;">
+      ${canEdit?`<button class="btn-ghost" style="flex:1;" onclick="editRec('${r.id}')">編輯</button>`:''}
+      ${isOwner
+        ? isPending
+          ? `<button class="btn-ghost" style="flex:1;color:#c66;border-color:#3a1a1a;" onclick="delRec('${r.id}')">確認刪除</button>
+             <button class="btn-ghost" style="flex:1;" onclick="cancelPendingDel('${r.id}')">取消標記</button>`
+          : `<button class="btn-ghost" style="flex:1;color:#c66;border-color:#3a1a1a;" onclick="delRec('${r.id}')">刪除</button>`
+        : !isPending
+          ? `<button class="btn-ghost" style="flex:1;color:#c66;border-color:#3a1a1a;" onclick="markPendingDel('${r.id}')">標記刪除</button>`
+          : '<div class="locked-msg">⏱ 已標記待刪除，等待管理員處理</div>'
+      }
+    </div>
+    ${!canEdit&&!isOwner&&!isPending?'<div class="locked-msg">⏱ 僅可編輯30分鐘內的記錄</div>':''}
+    <button class="btn-ghost" style="margin-top:10px;" onclick="closeRec()">關閉</button>`;
+};
+window.closeRec=function(){$('recMask').classList.remove('active');};
+window.delRec=async function(id){
+  if(!confirm('確定要刪除這筆記錄嗎？'))return;
+  await deleteDoc(doc(db,'records',id));
+  closeRec();toast('已刪除');
+  const cur=document.querySelector('.di.on');nav(cur?cur.dataset.view:'today_clients');
+};
+window.markPendingDel=async function(id){
+  if(!confirm('確定要標記這筆記錄為「待刪除」嗎？'))return;
+  await updateDoc(doc(db,'records',id),{pendingDelete:true,pendingDeleteBy:currentUserEmail,pendingDeleteAt:serverTimestamp()});
+  closeRec();toast('已標記待刪除，管理員將會處理');
+  const cur=document.querySelector('.di.on');nav(cur?cur.dataset.view:'today_clients');
+};
+window.cancelPendingDel=async function(id){
+  await updateDoc(doc(db,'records',id),{pendingDelete:false,pendingDeleteBy:null,pendingDeleteAt:null});
+  closeRec();toast('已取消標記');
+  const cur=document.querySelector('.di.on');nav(cur?cur.dataset.view:'today_clients');
+};
+window.editRec=async function(id){
+  const snap=await getDoc(doc(db,'records',id));
+  const r={id:snap.id,...snap.data()};
+  const isOwner=currentRole==='owner';
+  $('recModalBody').innerHTML=`
+    <div class="mt">編輯記錄</div>
+    <div class="field"><label class="flabel">姓名</label><input class="finput" id="eName" value="${esc(r.name)}"></div>
+    <div class="field"><label class="flabel">電話</label><input class="finput" id="ePhone" value="${esc(r.phone||'')}"></div>
+    ${isOwner?`<div class="field"><label class="flabel">價格</label><input class="finput en" id="ePrice" value="${r.price}" inputmode="numeric"></div>`:''}
+    <button class="btn-metal" onclick="saveEdit('${r.id}')">儲存修改</button>
+    <button class="btn-ghost" style="margin-top:10px;" onclick="openRec('${r.id}')">返回</button>`;
+};
+window.saveEdit=async function(id){
+  const priceEl=$('ePrice');
+  const patch={name:$('eName').value.trim(),phone:$('ePhone').value.trim()};
+  if(priceEl)patch.price=parseInt((priceEl.value||'').replace(/[^0-9]/g,''))||0;
+  await updateDoc(doc(db,'records',id),patch);
+  closeRec();toast('已更新');
+  const cur=document.querySelector('.di.on');nav(cur?cur.dataset.view:'today_clients');
+};
+
+/* ===== 匯出 ===== */
+function viewExport(){
+  const today=new Date();
+  const firstDay=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-01';
+  const todayVal=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  return `<div class="body-pad">
+    <div class="sec-title">✦ &nbsp; 匯出 Excel</div>
+    <div style="color:#888;font-size:13px;line-height:1.9;margin-bottom:22px;">選擇日期區間匯出記錄。</div>
+    <div style="display:flex;gap:14px;">
+      <div class="field" style="flex:1;"><label class="flabel">開始日期</label><input type="date" class="finput" id="expStart" value="${firstDay}"></div>
+      <div class="field" style="flex:1;"><label class="flabel">結束日期</label><input type="date" class="finput" id="expEnd" value="${todayVal}"></div>
+    </div>
+    <button class="btn-metal" onclick="doExport()">匯出 EXCEL</button>
+  </div>`;
+}
+window.doExport=async function(){
+  const start=$('expStart').value.replace(/-/g,'/');
+  const end=$('expEnd').value.replace(/-/g,'/');
+  if(!start||!end){toast('請選擇日期區間');return;}
+  if(start>end){toast('開始日期不能晚於結束日期');return;}
+  try{
+    const snap=await getDocs(query(collection(db,'records'),where('date','>=',start),where('date','<=',end),orderBy('date','desc')));
+    if(snap.empty){toast('此區間沒有資料');return;}
+    const rows=snap.docs.map(d=>{const r=d.data();return{日期:r.date,時間:r.time,姓名:r.name,電話:r.phone||'',服務項目:r.services.join('、'),價格:r.price,已簽名:r.sign?'是':'否'};});
+    const ws=XLSX.utils.json_to_sheet(rows);
+    ws['!cols']=[{wch:12},{wch:8},{wch:10},{wch:14},{wch:18},{wch:10},{wch:8}];
+    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'XIUGU 記錄');
+    XLSX.writeFile(wb,`XIUGU_${start.replace(/\//g,'')}_${end.replace(/\//g,'')}.xlsx`);
+    toast('已匯出');
+  }catch(e){toast('匯出失敗：'+e.message);}
+};
+
+/* ===== 待刪除清單 ===== */
+function viewPending(){
+  return `<div class="body-pad">
+    <div class="sec-title">⚠ &nbsp; 待刪除清單</div>
+    <div style="color:#888;font-size:13px;line-height:1.9;margin-bottom:20px;">以下記錄由員工標記為待刪除，請確認後再處理。</div>
+    <div id="pendingList"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+
+async function loadPendingList(){
+  const list=$('pendingList');if(!list)return;
+  try{
+    const snap=await getDocs(query(collection(db,'records'),where('pendingDelete','==',true)));
+    if(snap.empty){list.innerHTML='<div class="empty">目前沒有待刪除記錄 ✦</div>';return;}
+    list.innerHTML=snap.docs.map(d=>{
+      const r={id:d.id,...d.data()};
+      return `<div class="rec pending-del" onclick="openRec('${r.id}')">
+        <div>
+          <div class="nm">${esc(r.name)}<span class="pending-tag">待刪除</span></div>
+          <div class="meta">${r.date} ${r.time}　${esc(r.services.join('・'))}</div>
+          <div style="font-size:11px;color:#c66;margin-top:4px;">標記者：${esc(r.pendingDeleteBy||'—')}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){console.error(e);}
+}
+
+/* ===== 邀請碼管理 ===== */
+function viewInvite(){
+  return `<div class="body-pad">
+    <div class="sec-title">✦ &nbsp; 邀請碼管理</div>
+    <div style="color:#888;font-size:13px;line-height:1.9;margin-bottom:20px;">產生邀請碼，註冊後自動套用選定角色。</div>
+    <div class="field"><label class="flabel">此邀請碼的角色</label>
+      <div class="svc-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="svc-box sel" id="roleStaff" onclick="pickInviteRole('staff')"><span class="nm">設計師</span><span class="ck">✓</span></div>
+        <div class="svc-box" id="roleAsst" onclick="pickInviteRole('assistant')"><span class="nm">助理</span><span class="ck">✓</span></div>
+      </div>
+    </div>
+    <button class="btn-metal" onclick="genInvite()">產生新邀請碼</button>
+    <div class="sec-title" style="margin:28px 0 12px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">現有邀請碼</div>
+    <div id="inviteList"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+
+async function loadInvites(){
+  const list=$('inviteList');if(!list)return;
+  try{
+    const snap=await getDocs(collection(db,'inviteCodes'));
+    if(snap.empty){list.innerHTML='<div class="empty">尚無邀請碼</div>';return;}
+    list.innerHTML=snap.docs.map(d=>{
+      const inv=d.data();
+      const exp=inv.expiresAt?inv.expiresAt.toDate().toLocaleDateString('zh-TW'):'—';
+      const status=inv.used?`已使用（${esc(inv.usedBy||'')}）`:'未使用';
+      const roleTxt=inv.role==='assistant'?'助理':'設計師';
+      return `<div class="invite-box">
+        <div class="invite-code">${esc(d.id)}</div>
+        <div class="invite-exp">角色：${roleTxt}　到期：${exp}　狀態：${status}</div>
+      </div>`;
+    }).join('');
+  }catch(e){console.error(e);}
+}
+
+let inviteRole='staff';
+window.pickInviteRole=function(r){
+  inviteRole=r;
+  $('roleStaff').classList.toggle('sel',r==='staff');
+  $('roleAsst').classList.toggle('sel',r==='assistant');
+};
+window.genInvite=async function(){
+  // 產生6碼大寫英數邀請碼
+  const chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const code=Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  const expires=new Date();expires.setDate(expires.getDate()+7); // 7天有效
+  try{
+    await setDoc(doc(db,'inviteCodes',code),{
+      used:false,role:inviteRole,createdBy:currentUser.uid,
+      createdAt:serverTimestamp(),
+      expiresAt:expires
+    });
+    toast(`邀請碼已產生：${code}（${inviteRole==='assistant'?'助理':'設計師'}）`);
+    loadInvites();
+  }catch(e){toast('產生失敗：'+e.message);}
+};
+
+
+/* ==================== 打卡系統 ==================== */
+function viewClock(){
+  return `<div class="body-pad">
+    <div class="sec-title">⏱ &nbsp; 打卡</div>
+    <div id="clockBody"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+
+async function loadClock(){
+  const body=$('clockBody');if(!body)return;
+  const t=todayStr();
+  try{
+    const snap=await getDocs(query(collection(db,'timecards'),
+      where('uid','==',currentUser.uid),where('date','==',t)));
+    const rec=snap.empty?null:{id:snap.docs[0].id,...snap.docs[0].data()};
+    const now=new Date();
+    const nowTxt=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    let inner='';
+    if(!rec){
+      inner=`<div class="stat-big">
+          <div class="lb">TODAY · ${t.slice(5)}</div>
+          <div class="num en">${nowTxt}</div>
+          <div class="cnt">尚未打卡</div>
+        </div>
+        <div class="field" style="margin-top:20px;"><label class="flabel">備註（選填）</label>
+          <input class="finput" id="clockNote" placeholder="例如：今天顧店"></div>
+        <button class="btn-metal" onclick="doClockIn()">上班打卡 CLOCK IN</button>`;
+    } else if(!rec.clockOut){
+      inner=`<div class="stat-big">
+          <div class="lb">工作中 · ${t.slice(5)}</div>
+          <div class="num en">${hm(rec.clockIn)}</div>
+          <div class="cnt">已於此時間上班打卡</div>
+        </div>
+        ${rec.note?`<div class="svc-stat"><span class="k">備註</span><span class="v" style="font-family:inherit;color:#ddd;">${esc(rec.note)}</span></div>`:''}
+        <button class="btn-metal" style="margin-top:20px;" onclick="doClockOut('${rec.id}')">下班打卡 CLOCK OUT</button>`;
+    } else {
+      inner=`<div class="stat-big">
+          <div class="lb">已完成 · ${t.slice(5)}</div>
+          <div class="num en">${rec.hours} 小時</div>
+          <div class="cnt">${hm(rec.clockIn)} — ${hm(rec.clockOut)}</div>
+        </div>
+        ${rec.note?`<div class="svc-stat"><span class="k">備註</span><span class="v" style="font-family:inherit;color:#ddd;">${esc(rec.note)}</span></div>`:''}
+        <div class="locked-msg" style="margin-top:18px;">✦ 今日已完成打卡</div>`;
+    }
+    body.innerHTML=inner;
+  }catch(e){body.innerHTML='<div class="empty">載入失敗</div>';console.error(e);}
+}
+
+window.doClockIn=async function(){
+  const note=($('clockNote')&&$('clockNote').value.trim())||'';
+  const t=todayStr();
+  try{
+    // 防重複打卡
+    const chk=await getDocs(query(collection(db,'timecards'),
+      where('uid','==',currentUser.uid),where('date','==',t)));
+    if(!chk.empty){toast('今日已打過卡');loadClock();return;}
+    await addDoc(collection(db,'timecards'),{
+      uid:currentUser.uid, email:currentUserEmail, name:currentDisplayName,
+      date:t, month:t.slice(0,7), clockIn:serverTimestamp(), clockOut:null,
+      hours:0, note, settled:false, createdAt:serverTimestamp()
+    });
+    toast('上班打卡成功 ✦');loadClock();
+  }catch(e){toast('打卡失敗：'+e.message);}
+};
+
+window.doClockOut=async function(id){
+  if(!confirm('確定要下班打卡嗎？'))return;
+  try{
+    const snap=await getDoc(doc(db,'timecards',id));
+    const r=snap.data();
+    if(r.clockOut){toast('已經打過下班卡');loadClock();return;}
+    const inMs=r.clockIn.toDate().getTime();
+    const outMs=Date.now();
+    const hours=calcHours(inMs,outMs);
+    await updateDoc(doc(db,'timecards',id),{clockOut:new Date(outMs),hours});
+    toast(`下班打卡成功，本日 ${hours} 小時 ✦`);loadClock();
+  }catch(e){toast('打卡失敗：'+e.message);}
+};
+
+/* ==================== 我的時數 ==================== */
+let myhCur=new Date();
+function viewMyHours(){
+  return `<div class="body-pad">
+    <div class="sec-title">◷ &nbsp; 我的時數</div>
+    <div class="msel"><button class="mbtn" onclick="myhPrev()">‹</button><span class="mtxt" id="myhTxt"></span><button class="mbtn" onclick="myhNext()">›</button></div>
+    <div id="myhBody"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+window.myhPrev=function(){myhCur.setMonth(myhCur.getMonth()-1);loadMyHours();}
+window.myhNext=function(){myhCur.setMonth(myhCur.getMonth()+1);loadMyHours();}
+
+async function loadMyHours(){
+  const key=monthKey(myhCur);
+  const el=$('myhTxt');if(el)el.textContent=key.replace('/','.');
+  const body=$('myhBody');if(!body)return;
+  try{
+    let recs=[];
+    try{
+      const snap=await getDocs(query(collection(db,'timecards'),
+        where('uid','==',currentUser.uid),where('month','==',key)));
+      recs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.date<b.date?-1:1);
+    }catch(e){ console.error(e); }
+    if(!recs.length){body.innerHTML='<div class="empty">本月尚無打卡記錄 ✦</div>';return;}
+    const totalH=recs.reduce((s,r)=>s+(r.hours||0),0);
+    const incomplete=recs.filter(r=>!r.clockOut).length;
+    body.innerHTML=`
+      <div class="stat-big">
+        <div class="lb">HOURS · ${key.replace('/','.')}</div>
+        <div class="num en">${totalH} 小時</div>
+        <div class="cnt">共 ${recs.length} 天出勤${incomplete?` · ⚠ ${incomplete} 筆未完成`:''}</div>
+      </div>
+      <div class="sec-title" style="margin:26px 0 12px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">出勤明細</div>
+      ${recs.map(r=>`<div class="rec${!r.clockOut?' pending-del':''}">
+        <div>
+          <div class="nm">${r.date.slice(5)}${!r.clockOut?'<span class="pending-tag">未完成</span>':''}</div>
+          <div class="meta">${hm(r.clockIn)} — ${r.clockOut?hm(r.clockOut):'—'}${r.note?'　'+esc(r.note):''}</div>
+        </div>
+        <div class="pr">${r.hours||0} h</div>
+      </div>`).join('')}`;
+  }catch(e){body.innerHTML='<div class="empty">載入失敗</div>';console.error(e);}
+}
+
+/* ==================== 我的薪資 ==================== */
+let mysCur=new Date();
+function viewMySalary(){
+  return `<div class="body-pad">
+    <div class="sec-title">₩ &nbsp; 薪資明細</div>
+    <div class="msel"><button class="mbtn" onclick="mysPrev()">‹</button><span class="mtxt" id="mysTxt"></span><button class="mbtn" onclick="mysNext()">›</button></div>
+    <div id="mysBody"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+window.mysPrev=function(){mysCur.setMonth(mysCur.getMonth()-1);loadMySalary();}
+window.mysNext=function(){mysCur.setMonth(mysCur.getMonth()+1);loadMySalary();}
+
+async function loadMySalary(){
+  const key=monthKey(mysCur);
+  const el=$('mysTxt');if(el)el.textContent=key.replace('/','.');
+  const body=$('mysBody');if(!body)return;
+  try{
+    const sid=currentUser.uid+'_'+key.replace('/','');
+    // 分開處理，避免任一失敗導致整體失敗
+    let salSnap=null, adjs=[], tcs=[];
+    try{ salSnap=await getDoc(doc(db,'salaries',sid)); }catch(e){ salSnap=null; }
+    try{
+      const s=await getDocs(query(collection(db,'adjustments'),where('uid','==',currentUser.uid),where('month','==',key)));
+      adjs=s.docs.map(d=>d.data());
+    }catch(e){ adjs=[]; }
+    try{
+      const s=await getDocs(query(collection(db,'timecards'),where('uid','==',currentUser.uid),where('month','==',key)));
+      tcs=s.docs.map(d=>d.data());
+    }catch(e){ tcs=[]; }
+    const totalH=tcs.reduce((s,r)=>s+(r.hours||0),0);
+    adjs.sort((a,b)=>a.date<b.date?-1:1);
+    const adjSum=adjs.reduce((s,a)=>s+(a.amount||0),0);
+    const settled=salSnap&&salSnap.exists()&&salSnap.data().settled;
+    const rate=settled?salSnap.data().rate:currentRate;
+    const base=totalH*rate;
+    const grand=base+adjSum;
+    // 尚未結算：顯示提示 + 目前累積時數，不顯示金額
+    if(!settled){
+      body.innerHTML=`
+        <div class="stat-big">
+          <div class="lb">${key.replace('/','.')} · 尚未結算</div>
+          <div class="num en">${totalH} 小時</div>
+          <div class="cnt">目前累積出勤時數</div>
+        </div>
+        <div style="background:#0e0e0e;border:0.5px solid #222;border-radius:10px;padding:18px 20px;margin-top:18px;">
+          <div style="color:#aaa;font-size:13px;line-height:2;">
+            ✦ &nbsp;本月薪資將於月底結算<br>
+            結算完成後，此頁會顯示完整明細與金額
+          </div>
+        </div>
+        <div class="sec-title" style="margin:26px 0 8px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">目前記錄</div>
+        <div class="svc-stat"><span class="k">出勤天數</span><span class="v">${tcs.length} 天</span></div>
+        <div class="svc-stat"><span class="k">累積時數</span><span class="v">${totalH} 小時</span></div>`;
+      return;
+    }
+    // 已結算：顯示完整明細
+    body.innerHTML=`
+      <div class="stat-big">
+        <div class="lb">SALARY · ${key.replace('/','.')} · 已結算</div>
+        <div class="num">NT$ ${fmtMoney(grand)}</div>
+        <div class="cnt">${totalH} 小時 × $${rate}${adjSum?` ${adjSum>0?'+':''}${fmtMoney(adjSum)} 調整`:''}</div>
+      </div>
+      <div class="sec-title" style="margin:26px 0 8px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">計算明細</div>
+      <div class="svc-stat"><span class="k">總時數</span><span class="v">${totalH} 小時</span></div>
+      <div class="svc-stat"><span class="k">時薪</span><span class="v">NT$ ${fmtMoney(rate)}</span></div>
+      <div class="svc-stat"><span class="k">基本薪資</span><span class="v">NT$ ${fmtMoney(base)}</span></div>
+      ${adjs.length?`<div class="sec-title" style="margin:26px 0 8px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">加減項</div>
+      ${adjs.map(a=>`<div class="svc-stat"><span class="k">${a.date.slice(5)}　${esc(a.note||'')}</span><span class="v" style="color:${a.amount<0?'#c66':'#8c8'};">${a.amount>0?'+':''}${fmtMoney(a.amount)}</span></div>`).join('')}`:''}
+      <div class="svc-stat" style="border-top:0.5px solid #333;margin-top:10px;padding-top:14px;"><span class="k" style="color:#ddd;">應付總額</span><span class="v" style="font-size:17px;color:#fff;">NT$ ${fmtMoney(grand)}</span></div>`;
+  }catch(e){
+    console.error(e);
+    body.innerHTML=`<div style="background:#0e0e0e;border:0.5px solid #222;border-radius:10px;padding:20px;margin-top:10px;">
+      <div style="color:#aaa;font-size:13px;line-height:2;text-align:center;">
+        ✦ &nbsp;本月薪資尚未結算<br>
+        <span style="color:#666;font-size:12px;">結算完成後即可查看明細</span>
+      </div></div>`;
+  }
+}
+
+/* ==================== 材料費 ==================== */
+let matCur=new Date();
+function viewMaterial(){
+  return `<div class="body-pad">
+    <div class="sec-title">⬡ &nbsp; 材料費</div>
+    <div class="field"><label class="flabel">品項</label><input class="finput" id="matItem" placeholder="例如：染劑 6/0"></div>
+    <div style="display:flex;gap:14px;">
+      <div class="field" style="flex:1.4;"><label class="flabel">金額</label><input class="finput en" id="matAmt" placeholder="NT$ 0" inputmode="numeric"></div>
+      <div class="field" style="flex:1;"><label class="flabel">日期</label><input class="finput" id="matDate" type="date"></div>
+    </div>
+    <div class="field"><label class="flabel">備註（選填）</label><input class="finput" id="matNote" placeholder="補充說明"></div>
+    <button class="btn-metal" onclick="saveMaterial()">新增材料費</button>
+    <div class="msel" style="margin:28px 0 14px;"><button class="mbtn" onclick="matPrev()">‹</button><span class="mtxt" id="matTxt"></span><button class="mbtn" onclick="matNext()">›</button></div>
+    <div id="matBody"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+window.matPrev=function(){matCur.setMonth(matCur.getMonth()-1);loadMaterial();}
+window.matNext=function(){matCur.setMonth(matCur.getMonth()+1);loadMaterial();}
+
+window.saveMaterial=async function(){
+  const item=$('matItem').value.trim();
+  const amt=parseInt(($('matAmt').value||'').replace(/[^0-9]/g,''))||0;
+  const dv=$('matDate').value;
+  const note=$('matNote').value.trim();
+  if(!item){toast('請填寫品項');return;}
+  if(!amt){toast('請填寫金額');return;}
+  const date=dv?dv.replace(/-/g,'/'):todayStr();
+  try{
+    await addDoc(collection(db,'materials'),{
+      uid:currentUser.uid, email:currentUserEmail, name:currentDisplayName,
+      item, amount:amt, date, month:date.slice(0,7), note,
+      pendingDelete:false, createdAt:serverTimestamp()
+    });
+    toast('已新增 ✦');
+    $('matItem').value='';$('matAmt').value='';$('matNote').value='';
+    loadMaterial();
+  }catch(e){toast('儲存失敗：'+e.message);}
+};
+
+async function loadMaterial(){
+  const dEl=$('matDate');
+  if(dEl&&!dEl.value){const d=new Date();dEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  const key=monthKey(matCur);
+  const tEl=$('matTxt');if(tEl)tEl.textContent=key.replace('/','.');
+  const body=$('matBody');if(!body)return;
+  try{
+    let recs=[];
+    try{
+      const snap=await getDocs(query(collection(db,'materials'),
+        where('uid','==',currentUser.uid),where('month','==',key)));
+      recs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.date<b.date?1:-1);
+    }catch(e){ console.error(e); }
+    if(!recs.length){body.innerHTML='<div class="empty">本月尚無材料費記錄 ✦</div>';return;}
+    const total=recs.reduce((s,r)=>s+(r.amount||0),0);
+    body.innerHTML=`
+      <div class="stat-big">
+        <div class="lb">MATERIAL · ${key.replace('/','.')}</div>
+        <div class="num">NT$ ${fmtMoney(total)}</div>
+        <div class="cnt">共 ${recs.length} 筆</div>
+      </div>
+      <div style="margin-top:16px;">
+      ${recs.map(r=>`<div class="rec${r.pendingDelete?' pending-del':''}" onclick="openMat('${r.id}')">
+        <div><div class="nm">${esc(r.item)}${r.pendingDelete?'<span class="pending-tag">待刪除</span>':''}</div>
+        <div class="meta">${r.date.slice(5)}${r.note?'　'+esc(r.note):''}</div></div>
+        <div class="pr">$${fmtMoney(r.amount)}</div>
+      </div>`).join('')}</div>`;
+  }catch(e){body.innerHTML='<div class="empty">載入失敗</div>';console.error(e);}
+}
+
+window.openMat=async function(id){
+  const snap=await getDoc(doc(db,'materials',id));
+  if(!snap.exists())return;
+  const r={id:snap.id,...snap.data()};
+  const isOwner=currentRole==='owner';
+  $('recMask').classList.add('active');
+  $('recModalBody').innerHTML=`
+    <div class="mt">${esc(r.item)}<span class="search-result-meta">${r.date}</span>${r.pendingDelete?'<span class="pending-tag" style="margin-left:8px;">待刪除</span>':''}</div>
+    <div class="svc-stat"><span class="k">金額</span><span class="v">NT$ ${fmtMoney(r.amount)}</span></div>
+    <div class="svc-stat"><span class="k">登記人</span><span class="v" style="font-family:inherit;color:#ddd;">${esc(r.name||r.email)}</span></div>
+    ${r.note?`<div class="svc-stat"><span class="k">備註</span><span class="v" style="font-family:inherit;color:#ddd;">${esc(r.note)}</span></div>`:''}
+    <div style="display:flex;gap:10px;margin-top:22px;">
+      <button class="btn-ghost" style="flex:1;" onclick="editMat('${r.id}')">編輯</button>
+      ${isOwner
+        ? `<button class="btn-ghost" style="flex:1;color:#c66;border-color:#3a1a1a;" onclick="delMat('${r.id}')">刪除</button>`
+        : (r.pendingDelete
+            ? `<button class="btn-ghost" style="flex:1;" onclick="unmarkMat('${r.id}')">取消標記</button>`
+            : `<button class="btn-ghost" style="flex:1;color:#c66;border-color:#3a1a1a;" onclick="markMat('${r.id}')">標記刪除</button>`)}
+    </div>
+    <button class="btn-ghost" style="margin-top:10px;" onclick="closeRec()">關閉</button>`;
+};
+
+window.editMat=async function(id){
+  const snap=await getDoc(doc(db,'materials',id));
+  const r={id:snap.id,...snap.data()};
+  $('recModalBody').innerHTML=`
+    <div class="mt">編輯材料費</div>
+    <div class="field"><label class="flabel">品項</label><input class="finput" id="emItem" value="${esc(r.item)}"></div>
+    <div class="field"><label class="flabel">金額</label><input class="finput en" id="emAmt" value="${r.amount}" inputmode="numeric"></div>
+    <div class="field"><label class="flabel">備註</label><input class="finput" id="emNote" value="${esc(r.note||'')}"></div>
+    <button class="btn-metal" onclick="saveMatEdit('${r.id}')">儲存修改</button>
+    <button class="btn-ghost" style="margin-top:10px;" onclick="openMat('${r.id}')">返回</button>`;
+};
+window.saveMatEdit=async function(id){
+  const item=$('emItem').value.trim();
+  const amt=parseInt(($('emAmt').value||'').replace(/[^0-9]/g,''))||0;
+  if(!item||!amt){toast('品項與金額必填');return;}
+  await updateDoc(doc(db,'materials',id),{item,amount:amt,note:$('emNote').value.trim()});
+  closeRec();toast('已更新');loadMaterial();
+};
+window.markMat=async function(id){
+  if(!confirm('確定標記為待刪除嗎？'))return;
+  await updateDoc(doc(db,'materials',id),{pendingDelete:true,pendingDeleteBy:currentUserEmail,pendingDeleteAt:serverTimestamp()});
+  closeRec();toast('已標記，等待管理員處理');loadMaterial();
+};
+window.unmarkMat=async function(id){
+  await updateDoc(doc(db,'materials',id),{pendingDelete:false,pendingDeleteBy:null,pendingDeleteAt:null});
+  closeRec();toast('已取消標記');loadMaterial();
+};
+window.delMat=async function(id){
+  if(!confirm('確定要永久刪除這筆材料費嗎？'))return;
+  await deleteDoc(doc(db,'materials',id));
+  closeRec();toast('已刪除');
+  const cur=document.querySelector('.di.on');nav(cur?cur.dataset.view:'material');
+};
+
+/* ==================== 助理管理（Dana） ==================== */
+function viewAssist(){
+  return `<div class="body-pad">
+    <div class="sec-title">👥 &nbsp; 助理管理</div>
+    <div id="assistBody"><div class="empty">載入中...</div></div>
+  </div>`;
+}
+
+async function loadAssistList(){
+  const body=$('assistBody');if(!body)return;
+  try{
+    const snap=await getDocs(query(collection(db,'users'),where('role','==','assistant')));
+    const list=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!list.length){body.innerHTML='<div class="empty">目前沒有助理帳號 ✦</div>';return;}
+    body.innerHTML=`
+      <div style="color:#888;font-size:13px;line-height:1.9;margin-bottom:18px;">點選助理查看打卡、薪資與材料費。</div>
+      ${list.map(u=>`<div class="rec">
+        <div style="flex:1;cursor:pointer;" onclick="openAssist('${u.id}')">
+          <div class="nm">${esc(u.displayName||u.email)}${u.disabled?'<span class="pending-tag">已停用</span>':''}</div>
+          <div class="meta">時薪 NT$ ${fmtMoney(u.hourlyRate||200)}　${esc(u.email)}</div>
+        </div>
+        <button class="btn-ghost" style="width:auto;padding:0 12px;height:34px;font-size:12px;" onclick="editRate('${u.id}','${esc(u.displayName||u.email)}',${u.hourlyRate||200})">時薪</button>
+        <button class="btn-ghost" style="width:auto;padding:0 12px;height:34px;font-size:12px;margin-left:6px;${u.disabled?'':'color:#c66;border-color:#3a1a1a;'}" onclick="toggleAsst('${u.id}',${!!u.disabled})">${u.disabled?'啟用':'停用'}</button>
+      </div>`).join('')}`;
+  }catch(e){body.innerHTML='<div class="empty">載入失敗</div>';console.error(e);}
+}
+
+window.editRate=function(uid,name,rate){
+  $('recMask').classList.add('active');
+  $('recModalBody').innerHTML=`
+    <div class="mt">設定時薪</div>
+    <div class="mtext">${esc(name)}</div>
+    <div class="field"><label class="flabel">時薪（NT$）</label><input class="finput en" id="rateIn" value="${rate}" inputmode="numeric"></div>
+    <button class="btn-metal" onclick="saveRate('${uid}')">儲存</button>
+    <button class="btn-ghost" style="margin-top:10px;" onclick="closeRec()">取消</button>`;
+};
+window.saveRate=async function(uid){
+  const v=parseInt(($('rateIn').value||'').replace(/[^0-9]/g,''))||0;
+  if(!v){toast('請填寫時薪');return;}
+  await updateDoc(doc(db,'users',uid),{hourlyRate:v});
+  closeRec();toast('時薪已更新 ✦');loadAssistList();
+};
+window.toggleAsst=async function(uid,isDisabled){
+  await updateDoc(doc(db,'users',uid),{disabled:!isDisabled});
+  toast(isDisabled?'已啟用':'已停用');loadAssistList();
+};
+
+/* ===== 個別助理詳情 ===== */
+let curAsst=null, asstCur=new Date();
+
+window.openAssist=async function(uid){
+  const snap=await getDoc(doc(db,'users',uid));
+  if(!snap.exists())return;
+  curAsst={id:uid,...snap.data()};
+  asstCur=new Date();
+  $('viewArea').innerHTML=`<div class="body-pad">
+    <div class="sec-title">👤 &nbsp; ${esc(curAsst.displayName||curAsst.email)}</div>
+    <button class="btn-ghost" style="width:auto;padding:0 16px;height:36px;font-size:12px;margin-bottom:18px;" onclick="nav('assist')">← 返回助理列表</button>
+    <div class="msel"><button class="mbtn" onclick="asstPrev()">‹</button><span class="mtxt" id="asstTxt"></span><button class="mbtn" onclick="asstNext()">›</button></div>
+    <div id="asstBody"><div class="empty">載入中...</div></div>
+  </div>`;
+  loadAsstDetail();
+};
+window.asstPrev=function(){asstCur.setMonth(asstCur.getMonth()-1);loadAsstDetail();}
+window.asstNext=function(){asstCur.setMonth(asstCur.getMonth()+1);loadAsstDetail();}
+
+async function loadAsstDetail(){
+  if(!curAsst)return;
+  const key=monthKey(asstCur);
+  const el=$('asstTxt');if(el)el.textContent=key.replace('/','.');
+  const body=$('asstBody');if(!body)return;
+  try{
+    const sid=curAsst.id+'_'+key.replace('/','');
+    const [tcSnap,adjSnap,matSnap,salSnap]=await Promise.all([
+      getDocs(query(collection(db,'timecards'),where('uid','==',curAsst.id),where('month','==',key))),
+      getDocs(query(collection(db,'adjustments'),where('uid','==',curAsst.id),where('month','==',key))),
+      getDocs(query(collection(db,'materials'),where('uid','==',curAsst.id),where('month','==',key))),
+      getDoc(doc(db,'salaries',sid))
+    ]);
+    const tcs=tcSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.date<b.date?-1:1);
+    const adjs=adjSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.date<b.date?-1:1);
+    const mats=matSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.date<b.date?1:-1);
+    const settled=salSnap.exists()&&salSnap.data().settled;
+    const rate=curAsst.hourlyRate||200;
+    const totalH=tcs.reduce((s,r)=>s+(r.hours||0),0);
+    const adjSum=adjs.reduce((s,a)=>s+(a.amount||0),0);
+    const base=totalH*rate, grand=base+adjSum;
+    const matTotal=mats.reduce((s,r)=>s+(r.amount||0),0);
+    const incomplete=tcs.filter(r=>!r.clockOut).length;
+
+    body.innerHTML=`
+      <div class="stat-big">
+        <div class="lb">SALARY · ${key.replace('/','.')}${settled?' · 已結算 🔒':' · 未結算'}</div>
+        <div class="num">NT$ ${fmtMoney(grand)}</div>
+        <div class="cnt">${totalH} 小時 × $${rate}${adjSum?` ${adjSum>0?'+':''}${fmtMoney(adjSum)}`:''}</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-sm"><div class="lb">出勤天數</div><div class="num">${tcs.length}</div></div>
+        <div class="stat-sm"><div class="lb">材料費</div><div class="num">NT$ ${fmtMoney(matTotal)}</div></div>
+      </div>
+      ${incomplete?`<div class="locked-msg" style="color:#c66;margin-top:12px;">⚠ 有 ${incomplete} 筆未完成打卡，請補填下班時間</div>`:''}
+
+      <div style="display:flex;gap:10px;margin-top:18px;">
+        ${settled
+          ? `<button class="btn-ghost" style="flex:1;color:#c66;border-color:#3a1a1a;" onclick="unsettle('${sid}')">解除結算</button>`
+          : `<button class="btn-metal" style="flex:1;height:44px;font-size:13px;" onclick="doSettle('${sid}',${totalH},${rate},${adjSum},${grand})">確認結算並送出</button>`}
+      </div>
+
+      <div class="sec-title" style="margin:28px 0 10px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">打卡記錄</div>
+      ${tcs.length?tcs.map(r=>`<div class="rec${!r.clockOut?' pending-del':''}" onclick="${settled?'':`editTc('${r.id}')`}">
+        <div><div class="nm">${r.date.slice(5)}${!r.clockOut?'<span class="pending-tag">未完成</span>':''}</div>
+        <div class="meta">${hm(r.clockIn)} — ${r.clockOut?hm(r.clockOut):'—'}${r.note?'　'+esc(r.note):''}</div></div>
+        <div class="pr">${r.hours||0} h</div>
+      </div>`).join(''):'<div class="empty">本月無打卡記錄</div>'}
+
+      <div class="sec-title" style="margin:28px 0 10px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">加減項</div>
+      ${!settled?`<button class="btn-ghost" style="margin-bottom:10px;" onclick="addAdj()">＋ 新增加減項</button>`:''}
+      ${adjs.length?adjs.map(a=>`<div class="rec" onclick="${settled?'':`delAdj('${a.id}')`}">
+        <div><div class="nm">${esc(a.note||'調整')}</div><div class="meta">${a.date.slice(5)}</div></div>
+        <div class="pr" style="color:${a.amount<0?'#c66':'#8c8'};">${a.amount>0?'+':''}${fmtMoney(a.amount)}</div>
+      </div>`).join(''):'<div class="empty">無加減項</div>'}
+
+      <div class="sec-title" style="margin:28px 0 10px;font-size:11px;letter-spacing:0.3em;color:#666;font-weight:400;">材料費明細</div>
+      ${mats.length?mats.map(r=>`<div class="rec${r.pendingDelete?' pending-del':''}" onclick="openMat('${r.id}')">
+        <div><div class="nm">${esc(r.item)}${r.pendingDelete?'<span class="pending-tag">待刪除</span>':''}</div>
+        <div class="meta">${r.date.slice(5)}${r.note?'　'+esc(r.note):''}</div></div>
+        <div class="pr">$${fmtMoney(r.amount)}</div>
+      </div>`).join(''):'<div class="empty">本月無材料費記錄</div>'}`;
+  }catch(e){body.innerHTML='<div class="empty">載入失敗</div>';console.error(e);}
+}
+
+/* 補填/修改打卡 */
+window.editTc=async function(id){
+  const snap=await getDoc(doc(db,'timecards',id));
+  const r={id:snap.id,...snap.data()};
+  const inD=r.clockIn?r.clockIn.toDate():new Date();
+  const outD=r.clockOut?r.clockOut.toDate():null;
+  const fmt=d=>d?String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'):'';
+  $('recMask').classList.add('active');
+  $('recModalBody').innerHTML=`
+    <div class="mt">修改打卡　<span class="search-result-meta">${r.date}</span></div>
+    <div style="display:flex;gap:12px;">
+      <div class="field" style="flex:1;"><label class="flabel">上班</label><input class="finput" id="tcIn" type="time" value="${fmt(inD)}"></div>
+      <div class="field" style="flex:1;"><label class="flabel">下班</label><input class="finput" id="tcOut" type="time" value="${fmt(outD)}"></div>
+    </div>
+    <div class="field"><label class="flabel">備註</label><input class="finput" id="tcNote" value="${esc(r.note||'')}"></div>
+    <button class="btn-metal" onclick="saveTc('${r.id}','${r.date}')">儲存</button>
+    <button class="btn-ghost" style="margin-top:10px;color:#c66;border-color:#3a1a1a;" onclick="delTc('${r.id}')">刪除此筆</button>
+    <button class="btn-ghost" style="margin-top:10px;" onclick="closeRec()">取消</button>`;
+};
+window.saveTc=async function(id,dateStr){
+  const iv=$('tcIn').value, ov=$('tcOut').value;
+  if(!iv){toast('請填寫上班時間');return;}
+  const [y,m,d]=dateStr.split('/').map(Number);
+  const mk=(v)=>{if(!v)return null;const[hh,mm]=v.split(':').map(Number);return new Date(y,m-1,d,hh,mm);};
+  const inD=mk(iv), outD=mk(ov);
+  if(outD&&outD<=inD){toast('下班時間需晚於上班時間');return;}
+  const hours=outD?calcHours(inD.getTime(),outD.getTime()):0;
+  try{
+    await updateDoc(doc(db,'timecards',id),{
+      clockIn:inD, clockOut:outD||null, hours, note:$('tcNote').value.trim()
+    });
+    closeRec();toast(outD?`已更新，${hours} 小時 ✦`:'已更新 ✦');loadAsstDetail();
+  }catch(e){toast('更新失敗：'+e.message);}
+};
+window.delTc=async function(id){
+  if(!confirm('確定要刪除這筆打卡記錄嗎？'))return;
+  await deleteDoc(doc(db,'timecards',id));
+  closeRec();toast('已刪除');loadAsstDetail();
+};
+
+/* 加減項 */
+let adjSign=1;
+window.pickAdjSign=function(s){
+  adjSign=s;
+  $('adjPlus').classList.toggle('sel',s===1);
+  $('adjMinus').classList.toggle('sel',s===-1);
+};
+window.addAdj=function(){
+  const d=new Date();
+  const dv=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  adjSign=1;
+  $('recMask').classList.add('active');
+  $('recModalBody').innerHTML=`
+    <div class="mt">新增加減項</div>
+    <div class="field"><label class="flabel">類型</label>
+      <div class="svc-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="svc-box sel" id="adjPlus" onclick="pickAdjSign(1)" style="justify-content:center;"><span class="nm" style="font-size:22px;">＋</span></div>
+        <div class="svc-box" id="adjMinus" onclick="pickAdjSign(-1)" style="justify-content:center;"><span class="nm" style="font-size:22px;">－</span></div>
+      </div>
+    </div>
+    <div class="field"><label class="flabel">金額</label><input class="finput en" id="adjAmt" placeholder="例如 300" inputmode="numeric"></div>
+    <div class="field"><label class="flabel">日期</label><input class="finput" id="adjDate" type="date" value="${dv}"></div>
+    <div class="field"><label class="flabel">說明</label><input class="finput" id="adjNote" placeholder="例如：剪髮抽成"></div>
+    <button class="btn-metal" onclick="saveAdj()">儲存</button>
+    <button class="btn-ghost" style="margin-top:10px;" onclick="closeRec()">取消</button>`;
+};
+window.saveAdj=async function(){
+  const raw=($('adjAmt').value||'').trim();
+  const abs=parseInt(raw.replace(/[^0-9]/g,''))||0;
+  if(!abs){toast('請填寫金額');return;}
+  const amt=abs*adjSign;
+  const dv=$('adjDate').value;
+  const date=dv?dv.replace(/-/g,'/'):todayStr();
+  await addDoc(collection(db,'adjustments'),{
+    uid:curAsst.id, name:curAsst.displayName||curAsst.email,
+    amount:amt, date, month:date.slice(0,7), note:$('adjNote').value.trim(),
+    createdBy:currentUserEmail, createdAt:serverTimestamp()
+  });
+  closeRec();toast('已新增 ✦');loadAsstDetail();
+};
+window.delAdj=async function(id){
+  if(!confirm('確定要刪除這筆加減項嗎？'))return;
+  await deleteDoc(doc(db,'adjustments',id));
+  toast('已刪除');loadAsstDetail();
+};
+
+/* 結算 / 解除結算 */
+window.doSettle=async function(sid,totalH,rate,adjSum,grand){
+  if(!confirm(`確定結算並送出嗎？\n總時數 ${totalH} 小時 × $${rate}\n加減項 ${adjSum>=0?'+':''}${adjSum}\n應付總額 NT$ ${grand}`))return;
+  const key=monthKey(asstCur);
+  await setDoc(doc(db,'salaries',sid),{
+    uid:curAsst.id, name:curAsst.displayName||curAsst.email, email:curAsst.email,
+    month:key, totalHours:totalH, rate, baseSalary:totalH*rate,
+    adjustment:adjSum, grandTotal:grand,
+    settled:true, settledBy:currentUserEmail, settledAt:serverTimestamp()
+  });
+  toast('已結算並送出 ✦');loadAsstDetail();
+};
+window.unsettle=async function(sid){
+  if(!confirm('確定要解除結算嗎？解除後可重新修改記錄。'))return;
+  await updateDoc(doc(db,'salaries',sid),{
+    settled:false, unsettledBy:currentUserEmail, unsettledAt:serverTimestamp()
+  });
+  toast('已解除結算');loadAsstDetail();
+};
+
+/* ===== 設定 ===== */
+function viewSettings(){
+  const isOwner=currentRole==='owner';
+  return `<div class="body-pad">
+    <div class="sec-title">✦ &nbsp; 設定</div>
+    <div style="color:#888;font-size:13px;margin-bottom:24px;">登入帳號：${esc(currentUserEmail)}</div>
+
+    <div class="diamond-sep">— 顯示名稱 —</div>
+    <div class="field"><label class="flabel">你的名字</label><input class="finput" id="stName" value="${esc(currentDisplayName)}" placeholder="輸入顯示名稱"></div>
+    <button class="btn-ghost" onclick="doChangeName()">更新名稱</button>
+
+    <div class="diamond-sep">— 更改密碼 —</div>
+    <div class="field"><label class="flabel">新密碼</label><input type="password" class="finput" id="stNewPw" placeholder="至少6碼"></div>
+    <div class="field"><label class="flabel">確認新密碼</label><input type="password" class="finput" id="stNewPw2" placeholder="再輸入一次"></div>
+    <button class="btn-ghost" onclick="doChangePw()">更新密碼</button>
+
+    ${isOwner?`
+    <div class="diamond-sep">— 人員管理 —</div>
+    <div id="staffList"><div class="empty">載入中...</div></div>
+
+    <div class="diamond-sep">— 資料管理 —</div>
+    <div style="color:#777;font-size:12px;line-height:1.8;margin-bottom:14px;">清除指定月份以前的所有記錄，此操作無法復原。</div>
+    <div class="field"><label class="flabel">清除此日期之前的資料</label><input type="date" class="finput" id="clearBefore"></div>
+    <button class="btn-ghost" style="color:#c66;border-color:#3a1a1a;" onclick="doClearData()">清除資料</button>`:''}
+    <div class="diamond-sep">✦ &nbsp; ✦ &nbsp; ✦</div>
+    <button class="btn-ghost" onclick="doLogout()" style="color:#c66;border-color:#3a1a1a;">登出</button>
+  </div>`;
+}
+
+window.doChangeName = async function(){
+  const n=$('stName').value.trim();
+  if(!n){toast('請填寫名稱');return;}
+  if(n.length>20){toast('名稱過長');return;}
+  try{
+    await updateDoc(doc(db,'users',currentUser.uid),{displayName:n});
+    currentDisplayName=n;
+    buildNav();
+    toast('名稱已更新 ✦');
+  }catch(e){toast('更新失敗：'+e.message);}
+};
+
+window.doChangePw = async function(){
+  const np = $('stNewPw').value;
+  const np2 = $('stNewPw2').value;
+  if(!np){toast('請輸入新密碼');return;}
+  if(np.length<6){toast('密碼至少6碼');return;}
+  if(np!==np2){toast('兩次密碼不一致');return;}
+  try{
+    const {updatePassword} = await import("https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js");
+    await updatePassword(currentUser, np);
+    toast('密碼已更新 ✦');
+    $('stNewPw').value=''; $('stNewPw2').value='';
+  }catch(e){
+    if(e.code==='auth/requires-recent-login')toast('請重新登入後再試');
+    else toast('更新失敗：'+e.message);
+  }
+};
+
+window.loadStaffList = async function(){
+  const list=$('staffList');if(!list)return;
+  try{
+    const snap=await getDocs(collection(db,'users'));
+    const users=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.role==='staff');
+    if(!users.length){list.innerHTML='<div class="empty">目前沒有員工帳號</div>';return;}
+    list.innerHTML=users.map(u=>`
+      <div class="rec">
+        <div><div class="nm">${esc(u.email)}</div><div class="meta">${u.disabled?'已停用':'使用中'}</div></div>
+        <button class="btn-ghost" style="width:auto;padding:0 14px;height:36px;font-size:12px;${u.disabled?'':'color:#c66;border-color:#3a1a1a;'}" 
+          onclick="toggleStaff('${u.id}',${u.disabled})">${u.disabled?'啟用':'停用'}</button>
+      </div>`).join('');
+  }catch(e){console.error(e);}
+};
+
+window.toggleStaff = async function(uid, isDisabled){
+  try{
+    await updateDoc(doc(db,'users',uid),{disabled:!isDisabled});
+    toast(isDisabled?'已啟用':'已停用');
+    loadStaffList();
+  }catch(e){toast('操作失敗');}
+};
+
+window.doClearData = async function(){
+  const before=$('clearBefore').value.replace(/-/g,'/');
+  if(!before){toast('請選擇日期');return;}
+  if(!confirm(`確定要刪除 ${before} 之前的所有記錄嗎？此操作無法復原！`))return;
+  try{
+    const snap=await getDocs(query(collection(db,'records'),where('date','<',before)));
+    if(snap.empty){toast('沒有符合的資料');return;}
+    const batch=[];
+    snap.docs.forEach(d=>batch.push(deleteDoc(doc(db,'records',d.id))));
+    await Promise.all(batch);
+    toast(`已刪除 ${snap.size} 筆記錄`);
+  }catch(e){toast('刪除失敗：'+e.message);}
+};
 </script>
 </body>
 </html>
